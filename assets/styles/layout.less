@@ -1,0 +1,167 @@
+//@footer-height: 40px;
+//@container-md-max-width: 1100px;
+
+[v-cloak] { display: none; }
+html {
+  overflow-x: auto;
+  min-width: 1100px;
+}
+
+// html, body {
+//   height: 100%;
+//   margin: 0;
+// }
+
+// #page-wrap {
+//   .stretch-page();
+//   position: relative;
+//   padding-bottom: @footer-height;
+
+//   header {
+//     a {
+//       cursor: pointer;
+//     }
+//     .dropdown-menu.account-menu {
+//       left: auto;
+//       right: 0px;
+//     }
+//   }
+
+//   // App-wide styles for our ajax buttons
+//   .ajax-button {
+//     .ajax-button();
+//   }
+// }
+
+// #page-footer {
+//   border-top: 1px solid rgba(0, 0, 0, 0.1);
+//   height: @footer-height;
+//   width: 100%;
+//   position: absolute;
+//   left: 0px;
+//   bottom: 0px;
+//   .xs-only {
+//     display: none;
+//   }
+// }
+
+//body.detected-mobile {
+  // Above and beyond the media queries below, this selector (which relies on
+  // `parasails` automatically attaching this class, if appropriate) contains
+  // styles intended to be activated specifically when loaded from a recognized
+  // mobile device, regardless of viewport dimensions.  This includes tablet
+  // devices (like the iPad) as well as handset devices (like the iPhone).
+  // …
+//}
+
+// @media (max-width: 800px) {
+//   #page-wrap {
+//     padding-bottom: 75px;
+//     #page-footer {
+//       height: 75px;
+//       .copy, .nav {
+//         width: 100%;
+//         display: block;
+//         text-align: center;
+//         .nav-item {
+//           display: inline-block;
+//           a {
+//             display: inline-block;
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
+// @media (max-width: 450px) {
+//   #page-wrap {
+//     padding-bottom: 85px;
+//     #page-footer {
+//       height: 85px;
+//       .xs-only {
+//         display: block;
+//       }
+//     }
+//   }
+// }
+
+.logo {
+  @startLen: 308.522;
+  width: 50px;
+  transform: translate(0, -13px);
+  .logo-heart1, .logo-heart2 {
+    top: -63px;
+    left: -95px;
+    transform: rotateZ(-44deg) scale(.3);
+    position: absolute;
+  
+    .heart-path {
+      stroke: #E21737;
+      fill: transparent;
+      stroke-dasharray: @startLen, @startLen;
+      stroke-dashoffset: @startLen; 
+      animation: logo-anim 4s forwards;
+    }
+  }
+  .logo-heart2 {
+    left: -77px;
+    top: -74px;
+  }
+  
+  @keyframes logo-anim {
+    55% {
+      stroke-dashoffset: @startLen;
+      fill: transparent;
+    }
+    70% {
+      stroke-dashoffset: 0;
+      fill: transparent;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      fill: #E21737;
+    }
+  }
+}
+.application {
+  background: #f3f1f1;
+}
+.w-100 {
+  width: 100%;
+}
+.flex-column {
+  flex-direction: column;
+}
+.footer {
+  position: initial;
+  box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+  .age {
+    @size: 29px;
+    border-radius: 50%;
+    width: @size;
+    height: @size;
+    text-align: center;
+    line-height: @size;
+  }
+}
+.link-dark {
+  color: #fff;
+}
+.reset-wrap {
+  .v-chip__content {
+    white-space:normal;
+    height: auto;
+    padding: 4px 4px 4px 12px;
+  }
+}
+
+.user-custom-url.error--text.suc, .user-custom-url.error--text.suc .v-messages__message {
+  color: rgb(25, 118, 210) !important;
+  caret-color: rgb(25, 118, 210) !important;
+}
+
+.user-custom-url.error--text.err, .user-custom-url.error--text.err .v-messages__message {
+  color: #ff5252 !important;
+  caret-color: #ff5252 !important;
+}

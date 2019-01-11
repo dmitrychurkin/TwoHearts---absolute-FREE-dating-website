@@ -1,0 +1,17 @@
+{
+  "Welcome": "Welcome",
+  "A brand new app.": "A brand new app.",
+  "title": "free dating website",
+  "unknown.error.modale.header": "Error occured",
+  "unknown.error.modale.message": "Error occured, please try again",
+  "0.error.modale.header": "Offline error",
+  "0.error.modale.message": "Your network connection has been lost",
+  "password_mismatch": "Provided passwords mismatched",
+  "password_minlength": "Provided password less than 6 chars",
+  "signup_invalid": "The provided user fields are invalid.",
+  "email_already_inuse": "The provided email address is already in use.",
+  "no_such_user": "The provided email and password combination does not match any user in the database.",
+  "500.error": "Error occured, please try again",
+  "empty_string": "Empty string is invalid input",
+  "url_in_use": "Given address already in use"
+}

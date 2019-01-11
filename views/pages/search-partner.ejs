@@ -1,0 +1,151 @@
+<v-container grid-list-xs>
+  <v-layout>
+    <v-flex xs4 class="mr-3">
+      <v-layout column>
+      <% if (me) { %>
+        <v-flex class="mb-5">
+          <side-menu
+            :menu-items="[
+                {id:0,divider:1,title:'Просмотры',link:'/profile/views',icon:'visibility',count:<%=views.total %>,newCount:<%=views.new %>},
+                {id:1,divider:1,title:'Вы нравитесь',icon:'sentiment_satisfied',count:2,newCount:0},
+                {id:2,divider:1,title:'Вам нравятся',icon:'how_to_reg',count:4,newCount:0},
+                {id:3,divider:1,title:'Взаимные симпатии',icon:'whatshot',count:4,newCount:3},
+                {id:4,divider:1,title:'Дневники',icon:'local_library',count:'»'},
+                {id:5,title:'Новости сайта',icon:'new_releases',newCount:3}]"
+          ></side-menu>
+        </v-flex>
+      <% } %>
+        <v-flex class="mb-5">
+          <v-card>
+            <v-list two-line subheader>
+              <v-subheader>Последние новости</v-subheader>
+            
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>сегодня</v-list-tile-sub-title>
+                  <div class="diary-art">6 мелочей, которые помогут побороть одиночество</div>
+                </v-list-tile-content>
+              </v-list-tile>
+
+              <v-divider></v-divider>
+              
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>31 октября</v-list-tile-sub-title>
+                  <div class="diary-art">Любовь vs. Бургер: влюбленные мужчины отказываются от жира</div>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+
+            <v-divider></v-divider>
+
+            <v-btn
+                flat
+                color="info"
+                href="#">Все новости</v-btn>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-flex>
+    <v-flex xs8>
+      <v-card class="mb-5">
+        <v-layout>
+          <v-flex>
+            <v-card-title class="title">Результаты поиска</v-card-title>
+            <v-card-text>
+              Мы нашли людей по вашим параметрам. Увеличьте свою
+              популярность, подняв анкету в результатах поиска!
+            </v-card-text>
+          </v-flex>
+            <v-flex class="pr-3 pt-2">
+              <v-btn @click.stop="parnerSelectorVisible = !parnerSelectorVisible">
+                <v-icon left dark>settings</v-icon>
+                {{ parnerSelectorVisible ? 'Скрыть настройки' : 'Настроить поиск' }}
+              </v-btn>
+            </v-flex>
+        </v-layout>
+      </v-card>
+      <v-scale-transition>
+        <partner-selector
+          v-if="parnerSelectorVisible"
+          class="mb-5"
+          :user-data="me.partnerSelectorSearchProps || me.data"
+          :controls="['Искать','Идёт поиск']"
+          :gender="{label:'Я',items:[{value:1,text:'Парень'},{value:0,text:'Девушка'}]}"
+          :looking-for="{label:'Ищу',items:[{value:1,text:'Парня'},{value:0,text:'Девушку'}]}"
+          :place="{label:'Регион',misc:['Нажмите &#60;kbd&#62;enter&#60;/kbd&#62; для ввода']}"
+          :age-range="{head:'Ожидаемый возраст'}"
+          :purpose="{label:'Цель знакомства',items:[{value:-1,text:'Не имеет значения'},{value:0,text:'Поиск друзей'},{value:1,text:'Романтические отношения'},{value:2,text:'Создание семьи'},{value:3,text:'Секс'},{value:4,text:'Совместное путешествие'}]}"
+          :new-users="{label:'новые пользователи'}"
+          :online="{label:'сейчас онлайн'}"
+          :near-me="{label:'рядом co мной'}"
+          :expansion-panel="{head:'Расширенный поиск'}"
+          :interests="{label:'Общие интересы',hint:'Не более 5 интересов',misc:['Вы уже ввели 5 интересов']}"
+          :weight="{head:'Вес'}"
+          :height="{head:'Рост'}"
+          :languages="{label:'Знает языки',items:[{text:'Английский',value:1,skill:0},{text:'Немецкий',value:2,skill:0},{text:'Французский',value:3,skill:0},{text:'Итальянский',value:4,skill:0},{text:'Испанский',value:5,skill:0},{text:'Португальский',value:6,skill:0},{text:'Украинский',value:7,skill:0},{text:'Русский',value:8,skill:0},{text:'Иврит',value:9,skill:0},{text:'Арабский',value:10,skill:0}]}"
+          :skills="{label:'Уровень владения языком',items:[{text:'начальный',value:0},{text:'средний',value:1},{text:'продвинутый',value:2},{text:'родной',value:3}]}"
+          :relation="{label:'Отношения',items:[{value:1,text:'Свободен/Свободна'},{value:2,text:'Занят/Занята'},{value:3,text:'В браке, живет порознь'},{value:4,text:'Разведен/Разведена'},{value:5,text:'Вдовец/Вдова'}]}"
+          :children="{label:'Есть ли дети',items:[{value:1,text:'Детей нет, и не хочет'},{value:2,text:'Возможны в будущем'},{value:3,text:'Дети есть, больше не хочет'},{value:4,text:'Дети есть, хочет еще'}]}"
+          :education="{label:'Образование',items:[{text:'Среднее',value:1},{text:'Среднее-специальное',value:2},{text:'Студент(-ка)',value:3},{text:'Неполное высшее',value:4},{text:'Высшее',value:5},{text:'Несколько высших',value:6}]}"
+          :income="{label:'С материальным положением',items:[{value:1,text:'Есть небольшой стабильный доход'},{value:2,text:'Средний доход'},{value:3,text:'Очень хорошо зарабатывает'}]}"
+          :smoke="{label:'Отношение к курению',items:[{value:1,text:'Не курит, не терпит курящих'},{value:2,text:'Не курит, к курящим относится нейтрально'},{value:3,text:'Курит время от времени'},{value:4,text:'Курит каждый день'}]}"
+          :drink="{label:'Отношение к алкоголю',items:[{value:1,text:'Не пьет, не терпит выпивающих'},{value:2,text:'Не пьет, к выпивающим относится нейтрально'},{value:3,text:'Выпивает иногда в компаниях'},{value:4,text:'Любит выпить'}]}"
+          :zodiac="{label:'Со знаком Зодиака',items:[{value:1,text:'Козерог'},{value:2,text:'Водолей'},{value:3,text:'Рыбы'},{value:4,text:'Овен'},{value:5,text:'Телец'},{value:6,text:'Близнецы'},{value:7,text:'Рак'},{value:8,text:'Лев'},{value:9,text:'Дева'},{value:10,text:'Весы'},{value:11,text:'Скорпион'},{value:12,text:'Стрелец'}]}"
+          :body="{label:'Телосложение',items:[{text:'Стройное',value:1},{text:'Спортивное',value:2},{text:'Есть пара лишних кило',value:3},{text:'Полное',value:4}]}"
+          :eyes="{label:'С цветом глаз',items:[{text:'Карие',value:1},{text:'Серые',value:2},{text:'Голубые',value:3},{text:'Зеленые',value:4}]}"
+          :hair="{label:'С цветом волос',items:[{text:'Блонд',value:1},{text:'Русые',value:2},{text:'Шатен',value:3},{text:'Черные',value:4},{text:'Рыжие',value:5},{text:'Седые',value:6},{text:'Мелированные',value:7},{text:'Голова бритая наголо',value:8}]}"
+          :extras="{label:'На теле есть',items:[{value:0,text:'Пирсинг'},{value:1,text:'Татуировки'},{value:2,text:'Шрамы'},{value:3,text:'Веснушки'}]}"
+          :sponsore="{label:'Материальная поддержка',items:[{value:2,text:'Поддержу'},{value:1,text:'Ищу поддержку'}]}"
+          :car="{label:'Наличие автомобиля',items:[{text:'Нет',value:1},{text:'Есть',value:2}]}"
+          :sport="{label:'Спорт',items:[{value:0,text:'Бег'},{value:1,text:'Ходьба'},{value:2,text:'Фитнес'},{value:3,text:'Плавание'},{value:4,text:'Велосипед'},{value:5,text:'Ролики'},{value:6,text:'Лыжи'},{value:7,text:'Качалка'},{value:8,text:'Экстрим'},{value:9,text:'Единоборства'},{value:10,text:'Йога'},{value:11,text:'Командные игры'},{value:12,text:'Танцы'},{value:13,text:'Футбол'},{value:14,text:'Волейбол'},{value:15,text:'Хоккей'},{value:16,text:'Коньки'},{value:17,text:'Пилатес'},{value:18,text:'Гимнастика'}]}"
+          :mortgage="{label:'Жилищные условия',items:[{value:1,text:'Собственная квартира'},{value:2,text:'Дом, коттедж'},{value:3,text:'Комната в общежитии, коммуналка'},{value:4,text:'Снимает квартиру'},{value:5,text:'Снимает комнату'},{value:6,text:'Живет у родителей'}]}"
+          :orientation="{label:'Ориентация',items:[{value:1,text:'Гетеро'},{value:2,text:'В поиске себя'},{value:3,text:'Пансексуал'},{value:4,text:'Би'},{value:5,text:'Гей/Лесби'}]}"
+          :dating-as="{label:'Знакомится как пара',items:[{value:1,text:'М+Ж'},{value:2,text:'М+М'},{value:3,text:'Ж+Ж'}]}"
+          :looking-as="{label:'Ищет пару',items:[{value:0,text:'М+Ж'},{value:1,text:'М+М'},{value:2,text:'Ж+Ж'}]}"
+          :sex-role="{label:'Роль в сексе',items:[{value:1,text:'Универсальная'},{value:2,text:'Активная'},{value:3,text:'Пассивная'}]}"
+          :sex-like-in="{label:'Нравится в сексе',items:[{value:0,text:'Классический секс'},{value:1,text:'Анальный секс'},{value:2,text:'Ролевые игры'},{value:3,text:'Публичный секс'},{value:4,text:'Подглядывание'},{value:5,text:'Шимейл'},{value:6,text:'Кросс-дрессинг'},{value:7,text:'MILF'},{value:8,text:'Большой член'},{value:9,text:'Сквирт'},{value:10,text:'Фистинг'},{value:11,text:'Фингеринг'},{value:12,text:'Взаимная мастурбация'},{value:13,text:'Трибадизм'},{value:14,text:'Фрот'},{value:15,text:'Золотой дождь'}]}"
+          :sex-oral="{label:'Оральный секс',items:[{value:16,text:'Минет'},{value:17,text:'Глубокий минет'},{value:18,text:'МБР'},{value:19,text:'Куннилигус'},{value:20,text:'Вылизывание тела'},{value:21,text:'Вылизывание ног'},{value:22,text:'Анилингус'},{value:23,text:'Поза 69'}]}"
+          :sex-group="{label:'Групповой секс',items:[{value:24,text:'Свинг'},{value:25,text:'Оргия'},{value:26,text:'ЖМЖ'},{value:27,text:'МЖМ'},{value:28,text:'МЖМЖ'},{value:29,text:'Куколд'}]}"
+          :sex-bdsm="{label:'БДСМ',items:[{value:30,text:'Доминирование'},{value:31,text:'Подчинение'},{value:32,text:'Свитчинг'},{value:33,text:'Порка'},{value:34,text:'Бондаж'},{value:35,text:'Игры с дыханием'},{value:36,text:'Беби-плей'},{value:37,text:'Пет-плей'},{value:38,text:'Пеггинг'},{value:39,text:'Страпон'},{value:40,text:'Принуждение'},{value:41,text:'Пси-доминация'},{value:42,text:'Туалетные игры'},{value:43,text:'Фейсситтинг'},{value:44,text:'Садо'},{value:45,text:'Мазо'}]}"
+          :sex-fetish="{label:'Фетиш',items:[{value:46,text:'Кружевное белье'},{value:47,text:'Латекс'},{value:48,text:'Кожа'},{value:49,text:'Нейлон'},{value:50,text:'Фут-фетиш'}]}"
+          :security="csrf"
+        ></partner-selector>
+      </v-scale-transition>
+      <v-layout column>
+        <v-flex>
+          <v-layout class="mb-5" row wrap>
+            <v-flex class="mb-4" v-for="(user,index) in users.model" :key="index">
+              <user-card 
+                :user="{
+                  name:user.name,
+                  secondaryProfilePic:user.secondaryProfilePic || (user.gender ? '/images/male.jfif' : '/images/female.png'),
+                  photosCount:user.photosCount,
+                  ageData:[user.dateOfBirth].concat(yearSlov),
+                  place:user.place,
+                  lastSeenAt:user.lastSeenAt,
+                  userDeviceType:user.userDeviceType,
+                  gender:user.gender,
+                  online:user.online,
+                  uuid:user.uuid,
+                  userCustomURL:user.userCustomURL
+                }"
+                :astro-array="astroArray"
+                :controls="{tt:'Посмотреть страницу',btn:'Написать'}"
+                :offline-text-data-array="[['Была', 'Был'],['в']]"></user-card>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+        <v-flex class="text-xs-center" style="width:100%" v-if="users.length > 1" align-self-center>
+          <v-pagination
+            style="overflow-x:auto"
+            v-model="users.currentPage"
+            :length="users.length"
+            @input="users.onInput"
+            circle
+          ></v-pagination>
+        </v-flex>
+      </v-layout>
+    </v-flex>
+  </v-layout>
+</v-container>

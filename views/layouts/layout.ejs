@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'en'%>">
+  <head>
+    <title>TwoHearts - <%=__('title')%></title>
+
+    <% /* Viewport tag for sensible mobile support */ %>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <% /*
+        Stylesheets
+        ========================
+
+        Stylesheets can be hard-coded as «link» tags, automatically injected
+        by the asset pipeline between "STYLES" and "STYLES END", or both.
+        (https://sailsjs.com/docs/concepts/assets/task-automation)
+    */ %>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons' rel="stylesheet">
+    <% /* Auto-injected «link» tags: */ %>
+    <!--STYLES-->
+    <link rel="stylesheet" href="/dependencies/vuetify/vuetify.css">
+    <link rel="stylesheet" href="/styles/importer.css">
+    <!--STYLES END-->
+    <% if (typeof lang !== 'undefined') { %>
+    <script src="https://www.google.com/recaptcha/api.js?hl=<%=lang%>" async defer></script>
+    <% } %>
+    <script>
+      var $L = {
+        modal: {
+          errors: {
+            "unknown": {
+              header: "<%- __("unknown.error.modale.header") %>",
+              message: "<%- __("unknown.error.modale.message") %>"
+            },
+            0: {
+              header: "<%- __("0.error.modale.header") %>",
+              message: "<%- __("0.error.modale.message") %>"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+
+  <body>
+    <div id="page-wrap">
+      <v-app v-cloak>
+        <v-toolbar app dark color="primary" style="z-index:100">
+          <a href="/" class="d-flex">
+            <site-logo></site-logo>
+            <v-toolbar-title class="white--text">TwoHearts</v-toolbar-title>
+          </a>
+        <% if(typeof signup === 'undefined') { %>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-btn href="#" flat>
+              <v-icon left dark>favorite_border</v-icon>
+              Знакомства
+            </v-btn>
+          <% if (typeof me !== 'undefined') { %>
+            <v-btn href="#" flat>
+              <v-icon left dark>search</v-icon>
+              Поиск
+            </v-btn>
+            <v-btn v-if="chat.activeThreadCount" href="/profile/chat" flat>
+              <v-icon left dark>question_answer</v-icon>
+              <v-badge :value="chat.unreadTotalCount > 0" color="rgb(226, 23, 55)">
+                <span slot="badge">{{ chat.unreadTotalCount }}</span>
+                Cообщения
+              </v-badge>
+            </v-btn>
+          <% } else { %>
+            <v-btn href="#" flat>
+              <v-icon left dark>how_to_vote</v-icon>
+              Дневники
+            </v-btn>
+          <% } %>
+            <v-spacer></v-spacer>
+          </v-toolbar-items>
+        <% } %>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+          <% if (typeof me !== 'undefined') { %>
+            <v-menu lazy offset-y left allow-overflow>
+              <v-btn slot="activator" flat>
+                <v-avatar :size="30" color="grey lighten-4" class="mr-3">
+                  <img :src="userProfile.data.uuid === me.data.uuid ? (userProfile.secondaryProfilePic || (userProfile.mainData.data.gender ? '/images/male.jfif' : '/images/female.png')) : (me.secondaryProfilePic || (me.data.gender ? '/images/male.jfif' : '/images/female.png'))" alt="avatar">
+                </v-avatar>
+                  Профиль
+                <v-icon dark>arrow_drop_down</v-icon>
+              </v-btn>
+              <v-list>
+                <v-list-tile ripple light href="/profile">
+                  <v-list-tile-action>
+                    <v-icon light>account_circle</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>Мой профиль</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                <v-list-tile ripple light href="#">
+                  <v-list-tile-action>
+                    <v-icon light>add_a_photo</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>Загрузить фото</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                <v-list-tile ripple light href="#">
+                  <v-list-tile-action>
+                    <v-icon light>tune</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>Настройки сайта</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+
+                <v-divider light></v-divider>
+                <v-list-tile ripple light href="#">
+                  <v-list-tile-action>
+                    <v-icon light>contact_support</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>Помощь</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                <v-divider light></v-divider>
+                <v-list-tile ripple light @click.stop="logout">
+                  <v-list-tile-action>
+                    <v-icon light>backspace</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>Выход</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </v-list>
+            </v-menu>
+          <% } else { %>
+            <v-btn :disabled="requestSent" @click.stop.prevent="openSignInDialog = true" color="success" flat>
+              <v-icon left dark>open_in_browser</v-icon>
+              Войти
+            </v-btn>
+            <% if (typeof signup === 'undefined') { %>
+            <v-btn color="secondary" href="/signup" flat>
+              <v-icon left dark>perm_identity</v-icon>
+              Регистрация
+            </v-btn>
+            <% } %>
+          <% } %>
+          </v-toolbar-items>
+        </v-toolbar>
+        <v-content :class="{'pb-5': true, 'light-blue accent-1': me.data.uuid && chatActivated}" class="application">
+          <alert-notification class="my-3" :response-data="responseInfo"></alert-notification>
+          <%- body %>
+        </v-content>
+        <v-footer
+          app
+          dark
+          height="auto"
+          class="footer"
+        >
+          <v-card
+            class="flex"
+            color="primary"
+            flat
+            tile
+          >
+            <v-card-title>
+              <v-container grid-list-xs>
+                <v-layout row>
+                  <v-flex>
+                    <div class="body-2">Всего пользователей: <span class="subheading font-weight-thin">22,977,358</span>, новых: <span class="subheading font-weight-thin">12,797</span>, онлайн: <span class="subheading font-weight-thin">23,806</span></div>
+                  </v-flex>
+                  <v-flex>
+                    <a class="link-dark subheading" href="#">Условия использования</a>
+                  </v-flex>
+                  <v-flex>
+                    <a class="link-dark subheading" href="#">Обработка персональных данных</a>
+                  </v-flex>
+                  <v-flex>
+                    <div class="age success"><span class="font-weight-thin">18+</span></div>
+                  </v-flex>
+                </v-layout>
+                <v-layout row>
+                  <v-flex>
+                    <a class="link-dark subheading" href="#">Служба поддержки</a>
+                  </v-flex>
+                  <v-flex>
+                    Сайт знакомств <a class="link-dark subheading" href="#">twohearts.com</a> партнерская программа
+                  </v-flex>
+                  <v-flex>
+                    <a class="link-dark subheading" href="#">Контакты</a>
+                  </v-flex>
+                  <v-flex>
+                    <v-layout row>
+                      <v-flex xs3>
+                        Язык: 
+                      </v-flex>
+                      <v-flex class="ml-3">
+                        <site-language-selector></site-language-selector>
+                      </v-flex>
+                    </v-layout>
+                  </v-flex>
+                </v-layout>
+              <% if (typeof me === 'undefined' && typeof signup === 'undefined') { %>
+                <v-layout class="pt-4" column>
+                  <v-flex class="subheading font-weight-bold">
+                    Чаще всего ищут знакомства:
+                  </v-flex>
+                  <v-flex>
+                    <v-layout row>
+                      <v-flex>
+                        <div class="pb-3 pt-2 subheading font-weight-bold">Для чего:</div>
+                        <div>
+                          <ul>
+                            <li>
+                              <a class="link-dark" href="#">для брака и создания семьи</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">для любви и с/о</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">для дружбы</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">для секса</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">для взрослых</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </v-flex>
+                      <v-flex>
+                        <div class="pb-3 pt-2 subheading font-weight-bold">В возрасте:</div>
+                        <div>
+                          <ul>
+                            <li>
+                              <a class="link-dark" href="#">за 30 лет</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">за 40 лет</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">за 45 лет</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">за 50 лет</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">за 60 лет</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">для пожилых</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </v-flex>
+                      <v-flex>
+                        <div class="pb-3 pt-2 subheading font-weight-bold">С кем:</div>
+                        <div>
+                          <ul>
+                            <li>
+                              <a class="link-dark" href="#">с девушками</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">с мужчинами</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">с геями</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">с лесби</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">с фото</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">Знакомства</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </v-flex>
+                      <v-flex>
+                        <div class="pb-3 pt-2 subheading font-weight-bold">В городе:</div>
+                        <div>
+                          <ul>
+                            <li>
+                              <a class="link-dark" href="#">Москва</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">Санкт-Петербург</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">Екатеринбург</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </v-flex>
+                      <v-flex>
+                        <div class="pb-3 pt-2 subheading font-weight-bold">В стране:</div>
+                        <div>
+                          <ul>
+                            <li>
+                              <a class="link-dark" href="#">Россия</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">Украина</a>
+                            </li>
+                            <li>
+                              <a class="link-dark" href="#">Белоруссия</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </v-flex>
+                    </v-layout>
+                  </v-flex>
+                </v-layout>
+                <% } %>
+              </v-container>
+            </v-card-title>
+
+            <v-card-actions class="text-xs-right grey darken-3">
+              <v-flex xs7>
+                <a class="d-inline-block" href="/">
+                  <site-logo style="transform:translate(-10px, -25px) scale(.8)"></site-logo>
+                </a>
+                &copy; 2018 — present <a class="font-weight-black">TwoHearts</a>
+              </v-flex>
+              <v-flex>
+                by @Dmitry Churkin with <v-icon>favorite_border</v-icon>
+              </v-flex>
+            </v-card-actions>
+          </v-card>
+        </v-footer>
+      <% if (typeof me === 'undefined') { %>
+        <signin-form 
+          v-model="openSignInDialog"
+          @request-sent="requestSent = $event"
+          :email="{label:'Ваш E-mail',errors:['Это поле необходимо для заполнения','Пожалуйста введите валидный email']}"
+          :password="{label:'Пароль',errors:['Пароль должен содержать более 5 символов']}"
+          :remember="{label:'Запомнить меня'}"
+          :text-data="['Войти на сайт','Войти на TwoHearts','У вас еще нет анкеты?','Вы найдете множество интересных людей из вашего города. Начните общаться прямо сейчас.','Регистрация займет меньше минуты.','Нажимая кнопку &#34;Войти&#34;, вы принимаете &#60;a href=&#34;/terms&#34;&#62;условия пользовательского соглашения&#60;/a&#62; и даете согласие на обработку персональных данных.']"
+          :controls="['Забыли пароль?','Войти','Регистрация']"
+          ></signin-form>
+
+        <% } %>
+      </v-app>
+    </div>
+    <%- /* Expose locals as `window.SAILS_LOCALS` :: */ exposeLocalsToBrowser() %>
+    <% /*
+      Client-side JavaScript
+      ========================
+
+      Scripts can be hard-coded as «script» tags, automatically injected
+      by the asset pipeline between "SCRIPTS" and "SCRIPTS END", or both.
+      (https://sailsjs.com/docs/concepts/assets/task-automation)
+    */ %>
+
+    <% /* Load Stripe Checkout */ %>
+    <script src="https://checkout.stripe.com/checkout.js"></script>
+
+    <% /* Delete the global `self` to help avoid client-side bugs.
+    (see https://developer.mozilla.org/en-US/docs/Web/API/Window/self) */ %>
+    <script>delete window.self;</script>
+
+    <% /* Auto-injected «script» tags: */ %>
+    <!--SCRIPTS-->
+    <script src="/dependencies/sails.io.js"></script>
+    <script src="/dependencies/lodash.js"></script>
+    <script src="/dependencies/jquery.min.js"></script>
+    <script src="/dependencies/bowser.js"></script>
+    <script src="/dependencies/vue.js"></script>
+    <script src="/dependencies/cloud.js"></script>
+    <script src="/dependencies/parasails.js"></script>
+    <script src="/dependencies/vuetify/vuetify.js"></script>
+    <script src="/js/cloud.setup.js"></script>
+    <script src="/js/utilities/helpers.js"></script>
+    <script src="/js/utilities/open-stripe-checkout.js"></script>
+    <script src="/js/components/AlertNotification.js"></script>
+    <script src="/js/components/HeaderWithEditBtn.js"></script>
+    <script src="/js/components/LanguageSelectionHelper.js"></script>
+    <script src="/js/components/PartnerSelector.js"></script>
+    <script src="/js/components/SideMenu.js"></script>
+    <script src="/js/components/SigninForm.js"></script>
+    <script src="/js/components/SignupForm.js"></script>
+    <script src="/js/components/SiteLanguageSelector.js"></script>
+    <script src="/js/components/SiteLogo.js"></script>
+    <script src="/js/components/UserCard.js"></script>
+    <script src="/js/components/UserProfileEditor.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/498.page.js"></script>
+    <script src="/js/pages/account/account-overview.page.js"></script>
+    <script src="/js/pages/account/edit-password.page.js"></script>
+    <script src="/js/pages/account/edit-profile.page.js"></script>
+    <script src="/js/pages/contact.page.js"></script>
+    <script src="/js/pages/dashboard/welcome.page.js"></script>
+    <script src="/js/pages/entrance/confirmed-email.page.js"></script>
+    <script src="/js/pages/entrance/forgot-password.page.js"></script>
+    <script src="/js/pages/entrance/login.page.js"></script>
+    <script src="/js/pages/entrance/new-password.page.js"></script>
+    <script src="/js/pages/entrance/signup.page.js"></script>
+    <script src="/js/pages/faq.page.js"></script>
+    <script src="/js/pages/legal/privacy.page.js"></script>
+    <script src="/js/pages/legal/terms.page.js"></script>
+    <!--SCRIPTS END-->
+  </body>
+</html>

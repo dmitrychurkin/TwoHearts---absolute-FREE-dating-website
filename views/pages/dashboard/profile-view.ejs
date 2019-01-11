@@ -1,0 +1,91 @@
+<% if (me) { %>
+<v-container grid-list-xs>
+  <v-layout>
+    <v-flex xs4 class="mr-3">
+      <v-layout column>
+        <v-flex class="mb-5">
+          <side-menu
+            :menu-items="[
+                {id:0,divider:1,title:'Просмотры',icon:'visibility',count:<%=views.total %>},
+                {id:1,divider:1,title:'Вы нравитесь',icon:'sentiment_satisfied',count:2,newCount:0},
+                {id:2,divider:1,title:'Вам нравятся',icon:'how_to_reg',count:4,newCount:0},
+                {id:3,divider:1,title:'Взаимные симпатии',icon:'whatshot',count:4,newCount:3},
+                {id:4,divider:1,title:'Дневники',icon:'local_library',count:'»'},
+                {id:5,title:'Новости сайта',icon:'new_releases',newCount:3}]"
+          ></side-menu>
+        </v-flex>
+        <v-flex class="mb-5">
+          <v-card>
+            <v-list two-line subheader>
+              <v-subheader>Последние новости</v-subheader>
+            
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>сегодня</v-list-tile-sub-title>
+                  <div class="diary-art">6 мелочей, которые помогут побороть одиночество</div>
+                </v-list-tile-content>
+              </v-list-tile>
+
+              <v-divider></v-divider>
+              
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>31 октября</v-list-tile-sub-title>
+                  <div class="diary-art">Любовь vs. Бургер: влюбленные мужчины отказываются от жира</div>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+
+            <v-divider></v-divider>
+
+            <v-btn
+                flat
+                color="info"
+                href="#">Все новости</v-btn>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-flex>
+    <v-flex xs8>
+      <v-layout fill-height column>
+        <v-flex>
+          <v-layout class="mb-5" row wrap>
+            <v-flex class="mb-4" v-for="(newViewer,index) in viewers.model" :key="index">
+              <user-card 
+                :mode="1"
+                :user="{
+                  name:newViewer.initiator.name,
+                  secondaryProfilePic:newViewer.initiator.secondaryProfilePic || (newViewer.initiator.gender ? '/images/male.jfif' : '/images/female.png'),
+                  photosCount:newViewer.initiator.photosCount,
+                  ageData:[newViewer.initiator.dateOfBirth].concat(yearSlov),
+                  place:newViewer.initiator.place,
+                  lastSeenAt:newViewer.initiator.lastSeenAt,
+                  userDeviceType:newViewer.initiator.userDeviceType,
+                  gender:newViewer.initiator.gender,
+                  online:newViewer.initiator.online,
+                  uuid:newViewer.initiator.uuid,
+                  userCustomURL:newViewer.initiator.userCustomURL
+                }"
+                :viewed-at="newViewer.viewedAt"
+                :astro-array="astroArray"
+                :controls="{tt:'Посмотреть страницу',btn:'Написать'}"
+                :offline-text-data-array="[['Была', 'Был'],['в']]"></user-card>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+        <v-flex class="text-xs-center" style="width:100%" v-if="viewers.length > 1" align-self-center>
+          <v-pagination
+            style="overflow-x:auto"
+            v-model="viewers.currentPage"
+            :length="viewers.length"
+            @input="viewers.onInput"
+            circle
+          ></v-pagination>
+        </v-flex>
+      </v-layout>
+    </v-flex>
+  </v-layout>
+</v-container>
+<% }else{ %>
+<%- partial('../homepage.ejs') %>
+<% } %>

@@ -1,0 +1,1261 @@
+<% if (me) { %>
+<v-container grid-list-xs id="profilepage">
+  <v-layout>
+    <v-flex xs4 class="mr-3">
+      <v-layout column>
+        <v-flex class="mb-5">
+          <side-menu
+            :menu-items="[
+                {id:0,divider:1,title:'Просмотры',link:'/profile/views',icon:'visibility',count:<%=views.total %>,newCount:<%=views.new %>},
+                {id:1,divider:1,title:'Вы нравитесь',icon:'sentiment_satisfied',count:2,newCount:0},
+                {id:2,divider:1,title:'Вам нравятся',icon:'how_to_reg',count:4,newCount:0},
+                {id:3,divider:1,title:'Взаимные симпатии',icon:'whatshot',count:4,newCount:3},
+                {id:4,divider:1,title:'Дневники',icon:'local_library',count:'»'},
+                {id:5,title:'Новости сайта',icon:'new_releases',newCount:3}]"
+          ></side-menu>
+        </v-flex>
+        <v-flex class="mb-5">
+          <v-card>
+            <v-list two-line subheader>
+              <v-subheader>Последние новости</v-subheader>
+            
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>сегодня</v-list-tile-sub-title>
+                  <div class="diary-art">6 мелочей, которые помогут побороть одиночество</div>
+                </v-list-tile-content>
+              </v-list-tile>
+
+              <v-divider></v-divider>
+              
+              <v-list-tile ripple href="#" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-sub-title>31 октября</v-list-tile-sub-title>
+                  <div class="diary-art">Любовь vs. Бургер: влюбленные мужчины отказываются от жира</div>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+
+            <v-divider></v-divider>
+
+            <v-btn
+                flat
+                color="info"
+                href="#">Все новости</v-btn>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-flex>
+    <v-flex xs8>
+      <v-card>
+        <v-tabs
+          v-model="userProfile.activeTab"
+          centered
+          color="success"
+          grow
+          dark
+          icons-and-text
+          @change="onChangeTab"
+        >
+          <v-tabs-slider color="yellow"></v-tabs-slider>
+
+          <v-tab>
+            Мой профиль
+            <v-icon>assignment_ind</v-icon>
+          </v-tab>
+
+          <v-tab>
+            Фото
+            <v-icon>camera_enhance</v-icon>
+          </v-tab>
+
+          <v-tab>
+            Дневник
+            <v-icon>event</v-icon>
+          </v-tab>
+
+          <v-tab-item lazy :reverse-transition="false" :transition="false">
+            <v-card v-show="userProfile.currentTab == 0" class="px-3" flat>
+              <v-layout column>
+                <v-flex class="mb-4">
+                  <v-fade-transition 
+                    group 
+                    leave-absolute 
+                    hide-on-leave>
+                    <v-chip 
+                      key="chip"
+                      v-if="userProfile.thought.saved"
+                      class="reset-wrap mt-4"
+                      close
+                      @input="userProfile.thought.remove(userProfile.thought)"
+                      color="info" 
+                      text-color="white">
+                      <v-icon left>star</v-icon>
+                      {{ userProfile.thought.saved }}
+                    </v-chip>
+                  
+                    <span key="textarea" v-else>
+                      <v-textarea
+                        v-model.trim="userProfile.thought.cache"
+                        :rows="1"
+                        :rules="[maxLength('Слишком много символов',200)]"
+                        class="mt-3"
+                        auto-grow
+                        clearable
+                        counter
+                        maxlength="200"
+                        label="О чём ты думаешь?"
+                        hint="Не более 200 символов"
+                      ></v-textarea>
+                      <v-fade-transition>
+                        <v-btn class="mt-3" :disabled="requestSent" :loading="requestSent" v-show="userProfile.thought.cache" color="primary" @click.stop="userProfile.thought.save(userProfile.thought)">Сохранить</v-btn>
+                      </v-fade-transition>
+                    </span>
+                  </v-fade-transition>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout row>
+                    <v-flex xs3>
+                      <v-tooltip lazy bottom :z-index="1">
+                        <v-img
+                          slot="activator"
+                          class="profile-pic"
+                          :src="userProfile.mainData.data.primaryProfilePic || (userProfile.mainData.data.gender ? '/images/male.jfif' : '/images/female.png')"
+                          :alt="userProfile.mainData.data.name"
+                          lazy-src="/images/lazy.jfif"
+                          height="230"
+                          width="170"
+                          class="grey lighten-2">
+                          <v-layout
+                            slot="placeholder"
+                            fill-height
+                            align-center
+                            justify-center
+                            ma-0>
+                            <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                          </v-layout>
+                        </v-img>
+                        <span>Перейти в портфолио</span>
+                      </v-tooltip>
+                    </v-flex>
+                    <v-flex xs8 class="pl-3">
+                      <v-layout column>
+                        <v-flex>
+                          <user-profile-editor
+                            :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'},titleStyles:{color:'rgb(60, 60, 60)',fontSize:'21px',fontWeight:500,cursor:'context-menu'}}"
+                            :model="userProfile.mainData"
+                            :title="userProfile.mainData.data.name"
+                            form-ref="mainData"
+                            tooltip="Изменить">
+                            <v-text-field
+                              class="mb-3"
+                              v-model.trim="userProfile.mainData.cache.name"
+                              :counter="20"
+                              :rules="[required('Пожалуйста укажите Ваше имя'), minLength('Имя должно содержать не менее 3 символов',3), maxLength('Имя должно содержать не более 20 символов',20)]"
+                              hint="До 20 символов"
+                              label="Имя"
+                              maxlength="20"
+                            ></v-text-field>
+                            <v-radio-group 
+                              class="mb-3"
+                              label="Пол" 
+                              v-model="userProfile.mainData.cache.gender"
+                              column
+                            >
+                              <v-radio color="primary" label="Парень" :value="1"></v-radio>
+                              <v-radio color="primary" label="Девушка" :value="0"></v-radio>
+                            </v-radio-group>
+                            <v-menu
+                              ref="menu-profile"
+                              :close-on-content-click="false"
+                              v-model="userProfile.menu"
+                              :nudge-right="40"
+                              lazy
+                              transition="scale-transition"
+                              offset-y
+                              full-width
+                              min-width="290px"
+                            >
+                              <v-text-field 
+                                class="mb-3"
+                                slot="activator"
+                                v-model="userProfile.mainData.cache.dateOfBirth"
+                                label="Дата рождения"
+                                prepend-icon="event"
+                                readonly
+                              ></v-text-field>
+                              <v-date-picker
+                                ref="picker-profile"
+                                v-model="userProfile.mainData.cache.dateOfBirth"
+                                :max="new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString()"
+                                :min="new Date().getFullYear()-100+'-'+0+'-'+1"
+                                @change="userProfile.mainData.saveBirthDate"
+                              ></v-date-picker>
+                            </v-menu>
+                            <v-combobox
+                              v-model.trim="userProfile.mainData.cache.place"
+                              :rules="[required('Пожалуйста укажите Ваш город'), minLength('Название города должно содержать хотябы 2 символа',2), maxLength('Слишком длинное название места Вашего проживания',200)]"
+                              clearable
+                              chips
+                              solo
+                              maxlength="200"
+                              label="Город"
+                              hint="Нажмите ENTER для ввода"
+                            >
+                              <template
+                                slot="selection"
+                                slot-scope="data"
+                              >
+                                <v-chip
+                                  :selected="data.selected"
+                                  color="blue-grey"
+                                  class="white--text"
+                                >
+                                  <v-icon left>location_city</v-icon>
+                                  <span v-text="data.item"></span>
+                                </v-chip>
+                              </template>
+                            </v-combobox>
+                          </user-profile-editor>
+                        </v-flex>
+                        <v-flex>
+                          <span class="subheading" style="color:#909090">{{ genderTypes[userProfile.mainData.data.gender] }}, {{ getFormatedAge([userProfile.mainData.data.dateOfBirth].concat(yearSlov)) }}, {{ astroArray[zodiakFinder(userProfile.mainData.data.dateOfBirth)] }}</span>
+                        </v-flex>
+                        <v-flex>
+                          <v-icon color="info">room</v-icon>
+                          <a href="#">{{ userProfile.mainData.data.place }}</a>
+                        </v-flex>
+                        <v-flex>
+                          <v-overflow-btn
+                            style="width:70%"
+                            :items="[{text:'Добавить фото',callback: userProfile.options[0].callback}, {text:'Настройки',callback: userProfile.options[1].callback}]"
+                            segmented
+                            label="Опции"
+                          ></v-overflow-btn>
+                        </v-flex>
+                      </v-layout>
+                    </v-flex>
+                    <v-flex xs1>
+                      <v-layout class="text-xs-right" column>
+                        <v-flex class="text-truncate">
+                          <v-tooltip lazy bottom :z-index="1">
+                            <span slot="activator">
+                              <v-icon>visibility</v-icon>
+                              <span class="subheading" style="color:#909090"><%=views.current %></span>
+                            </span>
+                            <span>Сейчас эту анкету просматривает <%=views.current %> чел.</span>
+                          </v-tooltip>
+                        </v-flex>
+                        <v-flex>
+                          <v-tooltip lazy bottom :z-index="1">
+                            <span slot="activator">
+                              <v-icon color="success">done_outline</v-icon>
+                            </span>
+                            <span>Live-статус подключён</span>
+                          </v-tooltip>
+                        </v-flex>
+                      </v-layout>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'}}"
+                        :model="userProfile.interests"
+                        form-ref="interests"
+                        title="Интересы"
+                        tooltip="Изменить">
+                          <v-combobox
+                            v-model.trim="userProfile.interests.cache.interests"
+                            @input="userProfile.interests.onInput($event, 50)"
+                            counter="50"
+                            append-icon
+                            maxlength="50"
+                            autofocus
+                            multiple
+                            clearable
+                            chips
+                            deletable-chips
+                            label="Расскажите о своих увлечениях"
+                            hint="Не более 50 штук"></v-combobox>
+                      </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <span v-if="userProfile.interests.data.interests.length">
+                        <v-scale-transition group>
+                          <v-chip 
+                            v-for="(value, index) in userProfile.interests.data.interests"
+                            :key="index"
+                            @input="userProfile.interests.onRemove(userProfile.interests.data.interests,index)"
+                            close
+                            color="warning" 
+                            text-color="white">
+                            {{ value }}
+                          </v-chip>
+                        </v-scale-transition>
+                      </span>
+                      <span v-else class="grey--text text--darken-1">Вы пока не добавили ни одного интереса.</span>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        ref="datingAs"
+                        :model="userProfile.datingReq"
+                        data-default-error-message="Укажите, кого вы ищете, чтобы ваша анкета была видна в поиске"
+                        :dialog-settings="{maxWidth:'800px',controls:{cancel:'отмена',save:'сохранить',dismissible:false}}"
+                        :notification.sync="userProfile.notification"
+                        form-ref="datingReq"
+                        title="Познакомлюсь"
+                        tooltip="Изменить">
+                        <v-layout align-center justify-space-between>
+                          <v-flex xs5>
+                            <v-select
+                              v-model.trim="userProfile.datingReq.cache.lookingFor"
+                              :items="[{text:'Парня',value:1},{text:'Девушку',value:0}]"
+                              label="Я ищу:"
+                              clearable
+                              chips
+                              deletable-chips
+                              multiple>
+                            </v-select>
+                          </v-flex>
+                          <v-flex xs5>
+                            <v-subheader>Возраст от {{ userProfile.datingReq.cache.ageRange && userProfile.datingReq.cache.ageRange[0] }} до {{ userProfile.datingReq.cache.ageRange && userProfile.datingReq.cache.ageRange[1] }}</v-subheader>
+                            <v-range-slider 
+                              v-model.trim="userProfile.datingReq.cache.ageRange" 
+                              :max="99" 
+                              :min="18" 
+                              thumb-label="always"
+                              always-dirty></v-range-slider>
+                          </v-flex>
+                        </v-layout>
+                        <v-layout align-center justify-space-between>
+                          <v-flex xs5>
+                            <v-select
+                              v-model.trim="userProfile.datingReq.cache.lookingAs"
+                              :items="[{text:'М+Ж',value:0},{text:'М+М',value:1},{text:'Ж+Ж',value:2}]"
+                              label="Познакомлюсь с парой:"
+                              clearable
+                              chips
+                              deletable-chips
+                              multiple>
+                            </v-select>
+                          </v-flex>
+                          <v-flex xs5>
+                            <v-select
+                              v-model.trim="userProfile.datingReq.cache.purpose"
+                              :items="[{text:'Поиск друзей',value:0},{text:'Романтические отношения',value:1},{text:'Создание семьи',value:2},{text:'Секс',value:3},{text:'Совместное путешествие',value:4}]"
+                              label="Цель знакомства:"
+                              clearable
+                              chips
+                              deletable-chips
+                              multiple>
+                            </v-select>
+                          </v-flex>
+                        </v-layout>
+                        <v-divider class="my-4"></v-divider>
+                        <v-layout align-center justify-space-between>
+                          <v-flex xs5>
+                            <v-select
+                              v-model.trim="userProfile.datingReq.cache.datingAs"
+                              :items="[{text:'М+Ж',value:1},{text:'М+М',value:2},{text:'Ж+Ж',value:3},{text:'Нет ответа',value:0}]"
+                              label="Знакомлюсь как пара:">
+                            </v-select>
+                          </v-flex>
+                          <v-flex xs5>
+                            <v-select
+                              v-model.trim="userProfile.datingReq.cache.sponsore"
+                              :items="[{text:'Нужна поддержка',value:1},{text:'Готов поддержать',value:2},{text:'Нет ответа',value:0}]"
+                              label="Материальная поддержка:">
+                            </v-select>
+                          </v-flex>
+                        </v-layout>
+                      </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <span class="subheading">Я ищу 
+                      {{ formatData(userProfile.datingReq.data.lookingFor, ['девушку','парня']) }} 
+                      {{ userProfile.datingReq.data.lookingAs.length ? ('или пару ' + formatData(userProfile.datingReq.data.lookingAs, ['М+Ж','М+М','Ж+Ж'])) : '' }} 
+                      от {{ userProfile.datingReq.data.ageRange[0] }} до {{ userProfile.datingReq.data.ageRange[1] }}{{ userProfile.datingReq.data.purpose.length ? (' для ' + formatData(userProfile.datingReq.data.purpose, ['дружбы','романтических отношений','создания семьи','секса','совместного путешествия'])) : '' }}{{ userProfile.datingReq.data.datingAs ? ('. Знакомлюсь как пара ' + formatData(userProfile.datingReq.data.datingAs, ['','М+Ж','М+М','Ж+Ж']) + '.') : '.' }}{{ userProfile.datingReq.data.sponsore ? (' ' + formatData(userProfile.datingReq.data.sponsore, ['','Нужна поддержка','Готов поддержать']) + '.') : '' }}</span>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        form-ref="aboutEssay"
+                        :model="userProfile.aboutEssay"
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'}}"
+                        title="Свободно о себе"
+                        tooltip="Изменить">
+                          <v-textarea
+                            v-model.trim="userProfile.aboutEssay.cache.aboutEssay"
+                            :rows="3"
+                            :rules="[maxLength('Слишком много символов',2000)]"
+                            class="mt-3"
+                            autofocus
+                            auto-grow
+                            clearable
+                            counter
+                            maxlength="2000"
+                            label="Напишите немного о себе"
+                            hint="Не более 2000 символов"
+                          ></v-textarea>
+                        </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <span class="subheading" v-if="userProfile.aboutEssay.data.aboutEssay">
+                        {{ userProfile.aboutEssay.data.aboutEssay }}
+                      </span>
+                      <span v-else class="grey--text text--darken-1">Напишите несколько строк о себе и своем характере. Расскажите о ваших достижениях, приоритетах и жизненном опыте. Так ваша анкета станет интереснее и привлечёт больше внимания.</span>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        form-ref="expectEssay"
+                        :model="userProfile.expectEssay"
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'}}"
+                        title="Кого я хочу найти"
+                        tooltip="Изменить">
+                          <v-textarea
+                            v-model.trim="userProfile.expectEssay.cache.expectEssay"
+                            :rows="3"
+                            :rules="[maxLength('Слишком много символов',2000)]"
+                            class="mt-3"
+                            autofocus
+                            auto-grow
+                            clearable
+                            counter
+                            maxlength="2000"
+                            label="Напишите немного о том, кого Вы ищете"
+                            hint="Не более 2000 символов"
+                          ></v-textarea>
+                        </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <span class="subheading" v-if="userProfile.expectEssay.data.expectEssay">
+                        {{ userProfile.expectEssay.data.expectEssay }}
+                      </span>
+                      <span v-else class="grey--text text--darken-1">Расскажите, с кем бы вы хотели познакомиться и для чего. Укажите свои пожелания к будущему партнеру. Это поможет вам быстрее найти подходящего человека.</span>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        :model="userProfile.generalInfo"
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'},maxWidth:'800px'}"
+                        :save-cb="userProfile.generalInfo.sortLanguages"
+                        form-ref="generalInfo"
+                        title="Личная информация"
+                        tooltip="Изменить">
+                        <v-container grid-list-xs>
+                          <v-layout column>
+                            <v-flex>
+                              <v-subheader class="mb-3 subheading">Внешность:</v-subheader>
+                              <v-layout row justify-space-between align-center>
+                                <v-flex xs5>
+                                  <v-slider
+                                    v-model.trim="userProfile.generalInfo.height"
+                                    @input="userProfile.generalInfo.cache.height = $event"
+                                    always-dirty
+                                    thumb-label="always"
+                                    inverse-label
+                                    :min="140"
+                                    :max="240"
+                                    label="CM"
+                                  ></v-slider>
+                                </v-flex>
+                                <v-flex xs5>
+                                  <v-slider
+                                    v-model.trim="userProfile.generalInfo.weight"
+                                    @input="userProfile.generalInfo.cache.weight = $event"
+                                    always-dirty
+                                    thumb-label="always"
+                                    inverse-label
+                                    :min="40"
+                                    :max="150"
+                                    label="KG"
+                                  ></v-slider>
+                                </v-flex>
+                              </v-layout>
+                              <v-select
+                                v-model.trim="userProfile.generalInfo.cache.body"
+                                :items="[{text:'Стройное',value:1},{text:'Спортивное',value:2},{text:'Есть пара лишних кило',value:3},{text:'Полное',value:4},{text:'Нет ответа',value:0}]"
+                                label="Телосложение"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.generalInfo.cache.eyes"
+                                :items="[{text:'Карие',value:1},{text:'Серые',value:2},{text:'Голубые',value:3},{text:'Зеленые',value:4},{text:'Нет ответа',value:0}]"
+                                label="Цвет глаз"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.generalInfo.cache.hair"
+                                :items="[{text:'Блонд',value:1},{text:'Русые',value:2},{text:'Шатен',value:3},{text:'Черные',value:4},{text:'Рыжие',value:5},{text:'Седые',value:6},{text:'Мелированные',value:7},{text:'Голова бритая наголо',value:8},{text:'Нет ответа',value:0}]"
+                                label="Цвет волос"
+                              ></v-select>
+                              <v-subheader>На вашем теле есть</v-subheader>
+                              <v-checkbox 
+                                v-for="(value, index) in ['Пирсинг','Татуировки','Шрамы','Веснушки']"
+                                :key="index"
+                                v-model.trim="userProfile.generalInfo.cache.extras" 
+                                :label="value" 
+                                :value="index"
+                                color="primary"></v-checkbox>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Отношения</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.relation"
+                                    :items="userProfile.mainData.data.gender ? [{text:'Свободен',value:1},{text:'Занят',value:2},{text:'Женат, живем порознь',value:3},{text:'Разведен',value:4},{text:'Вдовец',value:5},{text:'Всё сложно',value:6},{text:'Нет ответа',value:0}] : [{text:'Свободна',value:1},{text:'Занята',value:2},{text:'Замужем, живем порознь',value:3},{text:'Разведена',value:4},{text:'Вдова',value:5},{text:'Всё сложно',value:6},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Дети</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.children"
+                                    :items="[{text:'Нет, и не хочу',value:1},{text:'Возможны в будущем',value:2},{text:'Уже есть, больше не хочу',value:3},{text:'Уже есть, хочу еще',value:4},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Жилищные условия</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.mortgage"
+                                    :items="[{text:'Собственная квартира',value:1},{text:'Дом, коттедж',value:2},{text:'Комната в общежитии, коммуналка',value:3},{text:'Снимаю квартиру',value:4},{text:'Снимаю комнату',value:5},{text:'Живу у родителей',value:6},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Наличие автомобиля</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.car"
+                                    :items="[{text:'Нет',value:1},{text:'Есть',value:2},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-subheader class="mb-3 subheading">Работа:</v-subheader>
+                              <v-select
+                                v-model.trim="userProfile.generalInfo.cache.education"
+                                :items="[{text:'Среднее',value:1},{text:'Среднее-специальное',value:2},{text:'Студент(-ка)',value:3},{text:'Неполное высшее',value:4},{text:'Высшее',value:5},{text:'Несколько высших',value:6},{text:'Нет ответа',value:0}]"
+                                label="Образование"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.generalInfo.cache.income"
+                                :items="[{text:'Небольшой стабильный доход',value:1},{text:'Средний доход',value:2},{text:'Очень хорошо зарабатываю',value:3},{text:'Нет ответа',value:0}]"
+                                label="Доход"
+                              ></v-select>
+                              <v-textarea
+                                v-model.trim="userProfile.generalInfo.cache.scope"
+                                :rows="3"
+                                :rules="[maxLength('Слишком много символов',200)]"
+                                auto-grow
+                                clearable
+                                counter
+                                maxlength="200"
+                                label="Сфера деятельности"
+                                hint="Не более 200 символов"
+                              ></v-textarea>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Курение</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.smoke"
+                                    :items="[{text:'Не курю, не терплю курящих',value:1},{text:'Не курю, к курящим отношусь нейтрально',value:2},{text:'Курю время от времени',value:3},{text:'Курю каждый день',value:4},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Алкоголь</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.drink"
+                                    :items="[{text:'Не пью, не терплю выпивающих',value:1},{text:'Не пью, к выпивающим отношусь нейтрально',value:2},{text:'Выпиваю иногда в компаниях',value:3},{text:'Люблю выпить',value:4},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-layout row justify-space-between align-center>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Владение иностранными языками</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <language-selector
+                                    :model.sync="userProfile.generalInfo.cache.languages"
+                                    :languages-data="{items:[{text:'Выберите язык',value:0},{text:'Английский',value:1,skill:0},{text:'Немецкий',value:2,skill:0},{text:'Французский',value:3,skill:0},{text:'Итальянский',value:4,skill:0},{text:'Испанский',value:5,skill:0},{text:'Португальский',value:6,skill:0},{text:'Украинский',value:7,skill:0},{text:'Русский',value:8,skill:0},{text:'Иврит',value:9,skill:0},{text:'Арабский',value:10,skill:0}]}"
+                                    :skills-data="{label:'Уровень владения языком',items:[{text:'начальный',value:0},{text:'средний',value:1},{text:'продвинутый',value:2},{text:'родной',value:3}]}"
+                                  ></language-selector>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-layout row justify-space-between align-center>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Спорт</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.generalInfo.cache.sport"
+                                    :items="[{value:0,text:'Бег'},{value:1,text:'Ходьба'},{value:2,text:'Фитнес'},{value:3,text:'Плавание'},{value:4,text:'Велосипед'},{value:5,text:'Ролики'},{value:6,text:'Лыжи'},{value:7,text:'Качалка'},{value:8,text:'Экстрим'},{value:9,text:'Единоборства'},{value:10,text:'Йога'},{value:11,text:'Командные игры'},{value:12,text:'Танцы'},{value:13,text:'Футбол'},{value:14,text:'Волейбол'},{value:15,text:'Хоккей'},{value:16,text:'Коньки'},{value:17,text:'Пилатес'},{value:18,text:'Гимнастика'}]"
+                                    counter
+                                    multiple
+                                    clearable
+                                    chips
+                                    deletable-chips
+                                    label="Расскажите о своих увлечениях"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                          </v-layout>
+                        </v-container>
+                      </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Внешность:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span 
+                            v-if="!userProfile.generalInfo.data.height 
+                                && !userProfile.generalInfo.data.weight 
+                                && !userProfile.generalInfo.data.body
+                                && !userProfile.generalInfo.data.hair
+                                && !userProfile.generalInfo.data.eyes
+                                && !userProfile.generalInfo.data.extras.length"
+                            class="grey--text text--darken-1"
+                          >Пока не указано</span>
+                          <span v-else class="subheading">{{ 
+                            [{v:userProfile.generalInfo.data.height,r:userProfile.generalInfo.data.height+' см'},
+                             {v:userProfile.generalInfo.data.weight,r:userProfile.generalInfo.data.weight+' кг'},
+                             {v:userProfile.generalInfo.data.body,r:formatData(userProfile.generalInfo.data.body, ['','стройное телосложение','спортивное телосложение','есть пара лишних кило','полное телосложение'])},
+                             {v:userProfile.generalInfo.data.hair || userProfile.generalInfo.data.eyes,r:formatData(userProfile.generalInfo.data.hair, ['','белокурые волосы','русые волосы','каштановые волосы','черные волосы','рыжие волосы','седые волосы','мелированные волосы','голова бритая наголо'])+(userProfile.generalInfo.data.hair && userProfile.generalInfo.data.eyes ? ' и ' : '' )+formatData(userProfile.generalInfo.data.eyes, ['','карие глаза','серые глаза','голубые глаза','зеленые глаза'])},
+                             {v:userProfile.generalInfo.data.extras.length,r:' есть '+formatData(userProfile.generalInfo.data.extras, ['пирсинг','татуировки','шрамы','веснушки'])}]
+                             .map(function(d){return d.v && d.r})
+                             .filter(function(d){return d})
+                             .join(', ')
+                            }}.</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Отношения:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.relation" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.relation, userProfile.mainData.data.gender ? ['','Свободен','Занят','Женат, живем порознь','Разведен','Вдовец','Всё сложно'] : ['','Свободна','Занята','Замужем, живем порознь','Разведена','Вдова','Всё сложно']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Дети:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.children" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.children, ['','Нет, и не хочу','Возможны в будущем','Уже есть, больше не хочу','Уже есть, хочу еще']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Жилищные условия:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.mortgage" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.mortgage, ['','Собственная квартира','Дом, коттедж','Комната в общежитии, коммуналка','Снимаю квартиру','Снимаю комнату','Живу у родителей']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Наличие автомобиля:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.car" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.car, ['','Нет','Есть']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Образование:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.education" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.education, ['','Среднее','Среднее-специальное','Студент(-ка)','Неполное высшее','Высшее','Несколько высших']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Доход:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.income" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.income, ['','Небольшой стабильный доход','Средний доход','Очень хорошо зарабатываю']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Сфера деятельности:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.scope" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ userProfile.generalInfo.data.scope }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Курение:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.smoke" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.smoke, ['','Не курю, не терплю курящих','Не курю, к курящим отношусь нейтрально','Курю время от времени','Курю каждый день']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Алкоголь:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.drink" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.generalInfo.data.drink, ['','Не пью, не терплю выпивающих','Не пью, к выпивающим отношусь нейтрально','Выпиваю иногда в компаниях','Люблю выпить']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Владение иностранными языками:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.languages.length" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">
+                            <span 
+                              v-for="(language,index) in userProfile.generalInfo.data.languages"
+                              :key="index"><span v-if="index">;&#160;</span>{{ ['','Английский','Немецкий','Французский','Итальянский','Испанский','Португальский','Украинский','Русский','Иврит','Арабский'][language.value] }} ({{ ['начальный','средний','продвинутый','родной'][language.skill] }})</span>
+                          </span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Спорт:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.generalInfo.data.sport.length" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">
+                            <span 
+                              v-for="(sport,index) in userProfile.generalInfo.data.sport"
+                              :key="index">
+                                <v-chip color="info">
+                                  <v-avatar class="amber">{{ ['Бег','Ходьба','Фитнес','Плавание','Велосипед','Ролики','Лыжи','Качалка','Экстрим','Единоборства','Йога','Командные игры','Танцы','Футбол','Волейбол','Хоккей','Коньки','Пилатес','Гимнастика'][index].charAt(0).toUpperCase() }}</v-avatar>
+                                  {{ ['Бег','Ходьба','Фитнес','Плавание','Велосипед','Ролики','Лыжи','Качалка','Экстрим','Единоборства','Йога','Командные игры','Танцы','Футбол','Волейбол','Хоккей','Коньки','Пилатес','Гимнастика'][index] }}
+                                </v-chip>
+                            </span>
+                          </span>
+                        </v-flex>
+                      </v-layout>
+                    </v-flex>
+                  <v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        :model="userProfile.sexualInfo"
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'},maxWidth:'800px'}"
+                        form-ref="sexualInfo"
+                        title="Сексуальные предпочтения"
+                        tooltip="Изменить">
+                        <v-container grid-list-xs>
+                          <v-layout column>
+                            <v-flex>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Ориентация</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.sexualInfo.cache.orientation"
+                                    :items="[{value:1,text:'Гетеро'},{value:2,text:'В поиске себя'},{value:3,text:userProfile.mainData.data.gender?'Пансексуал':'Пансексуалка'},{value:4,text:userProfile.mainData.data.gender?'Бисексуал':'Бисексуалка'},{value:5,text:userProfile.mainData.data.gender?'Гей':'Лесбиянка'},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                              <v-layout row justify-space-between align-end>
+                                <v-flex xs4>
+                                  <v-subheader class="mb-3 subheading">Роль в сексе</v-subheader>
+                                </v-flex>
+                                <v-flex xs7>
+                                  <v-select
+                                    v-model.trim="userProfile.sexualInfo.cache.sexRole"
+                                    :items="[{value:1,text:'Универсальная'},{value:2,text:'Активная'},{value:3,text:'Пассивная'},{text:'Нет ответа',value:0}]"
+                                  ></v-select>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                            <v-flex class="my-4">
+                              <v-divider></v-divider>
+                            </v-flex>
+                            <v-flex>
+                              <v-subheader class="mb-3 subheading">В сексе мне нравится:</v-subheader>
+                              <v-select
+                                v-model.trim="userProfile.sexualInfo.cache.sexLikeIn"
+                                :items="[{value:0,text:'Классический секс'},{value:1,text:'Анальный секс'},{value:2,text:'Ролевые игры'},{value:3,text:'Публичный секс'},{value:4,text:'Подглядывание'},{value:5,text:'Шимейл'},{value:6,text:'Кросс-дрессинг'},{value:7,text:'MILF'},{value:8,text:'Большой член'},{value:9,text:'Сквирт'},{value:10,text:'Фистинг'},{value:11,text:'Фингеринг'},{value:12,text:'Взаимная мастурбация'},{value:13,text:'Трибадизм'},{value:14,text:'Фрот'},{value:15,text:'Золотой дождь'}]"
+                                counter
+                                multiple
+                                clearable
+                                chips
+                                deletable-chips
+                                label="Общее"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.sexualInfo.cache.sexOral"
+                                :items="[{value:16,text:'Минет'},{value:17,text:'Глубокий минет'},{value:18,text:'МБР'},{value:19,text:'Куннилигус'},{value:20,text:'Вылизывание тела'},{value:21,text:'Вылизывание ног'},{value:22,text:'Анилингус'},{value:23,text:'Поза 69'}]"
+                                counter
+                                multiple
+                                clearable
+                                chips
+                                deletable-chips
+                                label="Оральный секс"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.sexualInfo.cache.sexGroup"
+                                :items="[{value:24,text:'Свинг'},{value:25,text:'Оргия'},{value:26,text:'ЖМЖ'},{value:27,text:'МЖМ'},{value:28,text:'МЖМЖ'},{value:29,text:'Куколд'}]"
+                                counter
+                                multiple
+                                clearable
+                                chips
+                                deletable-chips
+                                label="Групповой секс"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.sexualInfo.cache.sexBdsm"
+                                :items="[{value:30,text:'Доминирование'},{value:31,text:'Подчинение'},{value:32,text:'Свитчинг'},{value:33,text:'Порка'},{value:34,text:'Бондаж'},{value:35,text:'Игры с дыханием'},{value:36,text:'Беби-плей'},{value:37,text:'Пет-плей'},{value:38,text:'Пеггинг'},{value:39,text:'Страпон'},{value:40,text:'Принуждение'},{value:41,text:'Пси-доминация'},{value:42,text:'Туалетные игры'},{value:43,text:'Фейсситтинг'},{value:44,text:'Садо'},{value:45,text:'Мазо'}]"
+                                counter
+                                multiple
+                                clearable
+                                chips
+                                deletable-chips
+                                label="БДСМ"
+                              ></v-select>
+                              <v-select
+                                v-model.trim="userProfile.sexualInfo.cache.sexFetish"
+                                :items="[{value:46,text:'Кружевное белье'},{value:47,text:'Латекс'},{value:48,text:'Кожа'},{value:49,text:'Нейлон'},{value:50,text:'Фут-фетиш'}]"
+                                counter
+                                multiple
+                                clearable
+                                chips
+                                deletable-chips
+                                label="Фетиш"
+                              ></v-select>
+                            </v-flex>
+                          </v-layout>
+                        </v-container>
+                      </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Ориентация:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.sexualInfo.data.orientation" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.sexualInfo.data.orientation, ['','Гетеро','В поиске себя',userProfile.mainData.data.gender?'Пансексуал':'Пансексуалка',userProfile.mainData.data.gender?'Бисексуал':'Бисексуалка',userProfile.mainData.data.gender?'Гей':'Лесбиянка']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">Роль в сексе:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!userProfile.sexualInfo.data.sexRole" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">{{ formatData(userProfile.sexualInfo.data.sexRole, ['','Универсальная','Активная','Пассивная']) }}</span>
+                        </v-flex>
+                      </v-layout>
+                      <v-layout row align-center justify-space-between>
+                        <v-flex xs5>
+                          <v-subheader class="subheading">В сексе мне нравится:</v-subheader>
+                        </v-flex>
+                        <v-flex xs5>
+                          <span v-if="!totalLikeInSex.length" class="grey--text text--darken-1">Пока не указано</span>
+                          <span v-else class="subheading">
+                            <span 
+                              v-for="(item,index) in totalLikeInSex"
+                              :key="index">
+                                <v-chip color="info">
+                                  <v-avatar class="amber">{{ ['Классический секс','Анальный секс','Ролевые игры','Публичный секс','Подглядывание','Шимейл','Кросс-дрессинг','MILF','Большой член','Сквирт','Фистинг','Фингеринг','Взаимная мастурбация','Трибадизм','Фрот','Золотой дождь','Минет','Глубокий минет','МБР','Куннилигус','Вылизывание тела','Вылизывание ног','Анилингус','Поза 69','Свинг','Оргия','ЖМЖ','МЖМ','МЖМЖ','Куколд','Доминирование','Подчинение','Свитчинг','Порка','Бондаж','Игры с дыханием','Беби-плей','Пет-плей','Пеггинг','Страпон','Принуждение','Пси-доминация','Туалетные игры','Фейсситтинг','Садо','Мазо','Кружевное белье','Латекс','Кожа','Нейлон','Фут-фетиш'][item].charAt(0).toUpperCase() }}</v-avatar>
+                                  {{ ['Классический секс','Анальный секс','Ролевые игры','Публичный секс','Подглядывание','Шимейл','Кросс-дрессинг','MILF','Большой член','Сквирт','Фистинг','Фингеринг','Взаимная мастурбация','Трибадизм','Фрот','Золотой дождь','Минет','Глубокий минет','МБР','Куннилигус','Вылизывание тела','Вылизывание ног','Анилингус','Поза 69','Свинг','Оргия','ЖМЖ','МЖМ','МЖМЖ','Куколд','Доминирование','Подчинение','Свитчинг','Порка','Бондаж','Игры с дыханием','Беби-плей','Пет-плей','Пеггинг','Страпон','Принуждение','Пси-доминация','Туалетные игры','Фейсситтинг','Садо','Мазо','Кружевное белье','Латекс','Кожа','Нейлон','Фут-фетиш'][item] }}
+                                </v-chip>
+                            </span>
+                          </span>
+                        </v-flex>
+                      </v-layout>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex class="mb-4">
+                  <v-layout column>
+                    <v-flex>
+                      <user-profile-editor
+                        :model="userProfile.autoPortrait"
+                        :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'},maxWidth:'800px'}"
+                        form-ref="autoPortrait"
+                        title="Автопортрет"
+                        tooltip="Изменить">
+                          <v-textarea
+                            v-for="(item,index) in [{text:'Ваше образование',model:'educationAutoPortrait'},{text:'Любимая музыка',model:'musicAutoPortrait'},{text:'Любимые фильмы',model:'movieAutoPortrait'},{text:'Любимые книги',model:'bookAutoPortrait'},{text:'Любимые блюда',model:'recipeAutoPortrait'},{text:'Любимые города и страны',model:'countryAutoPortrait'},{text:'Любимые занятия',model:'hobbyAutoPortrait'},{text:'Любимые места',model:'placeAutoPortrait'},{text:'Самое хорошее в жизни',model:'goodAutoPortrait'},{text:'Самое ужасное в жизни',model:'badAutoPortrait'},{text:'Какие качества вы цените в людях',model:'qualityAutoPortrait'},{text:'Что вы могли бы простить, а что нет',model:'forgiveAutoPortrait'},{text:'Какое место занимает в вашей жизни религия',model:'religionAutoPortrait'},{text:'Есть ли у вас домашние животные',model:'petAutoPortrait'},{text:'Ваши достоинства',model:'meritAutoPortrait'},{text:'Ваши недостатки',model:'limitationAutoPortrait'},{text:'Чем интересна ваша работа',model:'workAutoPortrait'},{text:'Самый авантюрный поступок',model:'actAutoPortrait'},{text:'Что вам нравится или не нравится в телевизоре',model:'tvAutoPortrait'},{text:'Как вы относитесь к мату',model:'filthAutoPortrait'}]"
+                            :key="index"
+                            v-model.trim="userProfile.autoPortrait.cache[item.model]"
+                            :rows="3"
+                            :rules="[maxLength('Слишком много символов',5000)]"
+                            :label="item.text"
+                            class="my-3"
+                            auto-grow
+                            clearable
+                            counter
+                            maxlength="5000"
+                            hint="Не более 5000 символов"
+                            ></v-textarea>
+                      </user-profile-editor>
+                    </v-flex>
+                    <v-flex>
+                      <span v-if="!userProfile.autoPortrait.data.educationAutoPortrait
+                              && !userProfile.autoPortrait.data.musicAutoPortrait
+                              && !userProfile.autoPortrait.data.movieAutoPortrait
+                              && !userProfile.autoPortrait.data.bookAutoPortrait
+                              && !userProfile.autoPortrait.data.recipeAutoPortrait
+                              && !userProfile.autoPortrait.data.countryAutoPortrait
+                              && !userProfile.autoPortrait.data.hobbyAutoPortrait
+                              && !userProfile.autoPortrait.data.placeAutoPortrait
+                              && !userProfile.autoPortrait.data.goodAutoPortrait
+                              && !userProfile.autoPortrait.data.badAutoPortrait
+                              && !userProfile.autoPortrait.data.qualityAutoPortrait
+                              && !userProfile.autoPortrait.data.forgiveAutoPortrait
+                              && !userProfile.autoPortrait.data.religionAutoPortrait
+                              && !userProfile.autoPortrait.data.petAutoPortrait
+                              && !userProfile.autoPortrait.data.meritAutoPortrait
+                              && !userProfile.autoPortrait.data.limitationAutoPortrait
+                              && !userProfile.autoPortrait.data.workAutoPortrait
+                              && !userProfile.autoPortrait.data.actAutoPortrait
+                              && !userProfile.autoPortrait.data.tvAutoPortrait
+                              && !userProfile.autoPortrait.data.filthAutoPortrait" class="grey--text text--darken-1">Расскажите немного о своих интересах и увлечениях.</span>
+                      <span v-else>
+                        <v-layout
+                          v-for="(item,index) in [{text:'Ваше образование',model:'educationAutoPortrait'},{text:'Любимая музыка',model:'musicAutoPortrait'},{text:'Любимые фильмы',model:'movieAutoPortrait'},{text:'Любимые книги',model:'bookAutoPortrait'},{text:'Любимые блюда',model:'recipeAutoPortrait'},{text:'Любимые города и страны',model:'countryAutoPortrait'},{text:'Любимые занятия',model:'hobbyAutoPortrait'},{text:'Любимые места',model:'placeAutoPortrait'},{text:'Самое хорошее в жизни',model:'goodAutoPortrait'},{text:'Самое ужасное в жизни',model:'badAutoPortrait'},{text:'Какие качества вы цените в людях',model:'qualityAutoPortrait'},{text:'Что вы могли бы простить, а что нет',model:'forgiveAutoPortrait'},{text:'Какое место занимает в вашей жизни религия',model:'religionAutoPortrait'},{text:'Есть ли у вас домашние животные',model:'petAutoPortrait'},{text:'Ваши достоинства',model:'meritAutoPortrait'},{text:'Ваши недостатки',model:'limitationAutoPortrait'},{text:'Чем интересна ваша работа',model:'workAutoPortrait'},{text:'Самый авантюрный поступок',model:'actAutoPortrait'},{text:'Что вам нравится или не нравится в телевизоре',model:'tvAutoPortrait'},{text:'Как вы относитесь к мату',model:'filthAutoPortrait'}]"
+                          :key="index"
+                          v-if="userProfile.autoPortrait.data[item.model]"
+                          row align-center justify-space-between>
+                          <v-flex xs5>
+                            <v-subheader class="subheading">{{ item.text }}:</v-subheader>
+                          </v-flex>
+                          <v-flex xs7>
+                            <span class="subheading">{{ userProfile.autoPortrait.data[item.model] }}</span>
+                          </v-flex>
+                        </v-layout>
+                      </span>
+                    </v-flex>
+                    <v-flex class="mb-4">
+                      <v-layout column>
+                        <v-flex>
+                          <user-profile-editor
+                            form-ref="url"
+                            :disable-btn="userProfile.url.loading || !!userProfile.url.errorMessage"
+                            :model="userProfile.url"
+                            :dialog-settings="{controls:{cancel:'отмена',save:'сохранить'}}"
+                            title="Адрес страницы"
+                            tooltip="Изменить">
+                              <v-subheader>Вы можете отредактировать адрес Вашей анкеты:</v-subheader>
+                              <v-layout row align-center>
+                                <v-flex xs4>{{ pageURL.split('/').slice(0,-1).join('/') + '/' }}</v-flex>
+                                <v-flex>
+                                  <v-text-field
+                                    v-model.trim="userProfile.url.cache.userCustomURL"
+                                    :error-messages="[userProfile.url.errorMessage || userProfile.url.infoMessage]"
+                                    :loading="userProfile.url.loading"
+                                    :class="{'user-custom-url': true, 'suc': !userProfile.url.errorMessage, 'err': userProfile.url.errorMessage}"
+                                    autofocus
+                                    counter="45"
+                                    hint="не более 45 латинских символов"
+                                    maxlength="45"
+                                    @input="userProfile.url.checkURLAvail({required: 'Это поле является обязательным к заполнению',maxLength: 'Название превышает 45 символов',unique: 'Данный адрес уже используется',available: 'Данный адрес свободен'})"
+                                  ></v-text-field>
+                                </v-flex>
+                              </v-layout>
+                            </user-profile-editor>
+                        </v-flex>
+                        <v-flex class="text-truncate">
+                          <a :href="pageURL" title="Адрес Вашей анкеты в интернете">{{ pageURL }}</a>
+                        </v-flex>
+                      </v-layout>
+                    </v-flex>
+                  <v-layout>
+                </v-flex>
+              </v-layout>
+            </v-card>
+          </v-tab-item>
+          <v-tab-item lazy :reverse-transition="false" :transition="false">
+            <v-card v-show="userProfile.currentTab == 1">Tab 2</v-card>
+          </v-tab-item>
+          <v-tab-item lazy :reverse-transition="false" :transition="false">
+            <v-card v-show="userProfile.currentTab == 2">
+                <v-layout column>
+                  <v-flex v-if="diaries.activeSection > 0 && diaries.activeSection < 4">
+                    <v-btn @click="diaries.activeSection = 0" flat small color="primary">
+                      <v-icon left>arrow_back</v-icon>
+                      Вернуться в дневник
+                    </v-btn>
+                  </v-flex>
+                  <v-flex>
+                    <v-layout row justify-space-between align-center>
+                      <v-flex>
+                        <v-subheader v-if="diaries.activeSection == 0" class="subheading font-weight-regular">{{ me.authed ? 'Мой дневник' : (userProfile.mainData.data.name + ', ' + getAge(userProfile.mainData.data.dateOfBirth) + ' - Дневник') }}</v-subheader>
+                        <v-subheader v-if="diaries.activeSection == 1" class="subheading font-weight-regular">Список подписчиков дневника</v-subheader>
+                        <v-subheader v-if="diaries.activeSection == 2" class="subheading font-weight-regular">Мои подписки на дневники</v-subheader>
+                        <v-subheader v-if="diaries.activeSection == 3" class="subheading font-weight-regular">Рубрики</v-subheader>
+                        <v-subheader v-if="diaries.activeSection == 4" class="subheading font-weight-regular">Создание новой рубрики</v-subheader>
+                        <v-subheader v-if="diaries.activeSection == 5" class="subheading font-weight-regular">Редактирование рубрики</v-subheader>
+                      </v-flex>
+                      <v-flex class="text-xs-right">
+                        <template v-if="me.authed && diaries.activeSection < 4">
+                          <v-btn @click="diaries.activeSection = 1" :input-value="diaries.activeSection == 1" flat small color="accent">
+                            <v-icon left>supervised_user_circle</v-icon>
+                            Подписчики
+                          </v-btn>
+                          <v-btn @click="diaries.activeSection = 2" :input-value="diaries.activeSection == 2" flat small color="info">
+                            <v-icon left>subscriptions</v-icon>
+                            Подписки
+                          </v-btn>
+                          <v-btn @click="onTopicCreate" v-if="diaries.activeSection == 3" :input-value="diaries.activeSection == 3" flat small color="success">
+                            <v-icon left>new_releases</v-icon>
+                            Создать рубрику
+                          </v-btn>
+                          <v-btn @click="diaries.activeSection = 3" v-else flat small color="success">
+                            <v-icon left>question_answer</v-icon>
+                            Рубрики
+                          </v-btn>
+                        </template>
+                        <v-btn @click="diaries.activeSection = 3" v-else-if="me.authed && diaries.activeSection >= 4" flat small color="error">
+                          <v-icon left>pan_tool</v-icon>
+                          Отмена
+                        </v-btn>
+                        <template v-else-if="!me.authed && diaries.activeSection == 0">
+                          <v-btn v-if="me.diaries.subscribed" flat small color="warning" loading="false">
+                            <v-icon left>speaker_notes_off</v-icon>
+                            Отписаться
+                          </v-btn>
+                          <v-btn v-else flat small color="warning" loading="false">
+                            <v-icon left>speaker_notes</v-icon>
+                            Подписаться
+                          </v-btn>
+                          <v-btn 
+                            :input-value="diaries.activeSection == 1" 
+                            flat 
+                            color="accent">
+                            <v-icon left>supervised_user_circle</v-icon>
+                            Подписчики
+                          </v-btn>
+                        </template>
+                      </v-flex>
+                    </v-layout>
+                  </v-flex>
+                  <v-flex class="px-2" v-if="diaries.activeSection == 0">
+                    <v-chip 
+                      :selected="diaries.selectedTopicId==0"
+                      color="primary" 
+                      text-color="white"
+                      @click.stop="diaryTopicSelected({id:0})">Все</v-chip>
+                    <v-chip 
+                      :selected="diaries.selectedTopicId==1"
+                      color="primary" 
+                      text-color="white"
+                      @click.stop="diaryTopicSelected({id:1})">Цитаты</v-chip>
+                    <v-chip 
+                      v-for="topic in diaries.topics" 
+                      :key="topic.id"
+                      :selected="diaries.selectedTopicId==topic.id"
+                      outline
+                      color="accent"
+                      @click.stop="diaryTopicSelected(topic)">{{ topic.text }}</v-chip>
+                  </v-flex>
+                  <v-flex class="pb-0" v-else-if="diaries.activeSection == 2">
+                      <template v-for="(subscribtion,index) in diaries.subscribtions">
+                        <v-divider></v-divider>
+                          <v-layout class="py-2" row align-center fill-height>
+                            <v-flex class="pl-2">
+                              <v-tooltip lazy bottom :z-index="1">
+                                <a slot="activator" :href="subscribtion.userUrl">
+                                  <v-img
+                                    :src="subscribtion.imageSrc || (subscribtion.gender ? '/images/male.jfif' : '/images/female.png')"
+                                    :alt="subscribtion.name"
+                                    lazy-src="/images/lazy.jfif"
+                                    width="60"
+                                    class="grey lighten-2">
+                                    <v-layout
+                                      slot="placeholder"
+                                      fill-height
+                                      align-center
+                                      justify-center
+                                      ma-0>
+                                      <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                                    </v-layout>
+                                  </v-img>
+                                </a>
+                                <span>Смотреть анкету</span>
+                              </v-tooltip>
+                            </v-flex>
+                            <v-flex xs11 class="pl-2">
+                              <v-layout column>
+                                <v-flex>
+                                  <v-tooltip lazy bottom :z-index="1">
+                                    <a slot="activator" :href="subscribtion.userUrl">
+                                      <span>{{ subscribtion.name }}</span>
+                                    </a>
+                                    <span>Смотреть анкету</span>
+                                  </v-tooltip>
+                                  <div>{{ getAge(subscribtion.dateOfBirth) }}, {{ astroArray[zodiakFinder(subscribtion.dateOfBirth)] }}</div>
+                                  <div>{{ subscribtion.place }}</div>
+                                  <div class="text-truncate" v-if="subscribtion.lastSeen != 0">
+                                    {{ subscribtion.lastSeen }}
+                                  </div>
+                                  <div v-else>
+                                    <svg v-if="subscribtion.deviceType == 0" style="height:20px" viewBox="0 0 24 24">
+                                      <path fill="#4caf50" d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
+                                    </svg>
+                                    <svg v-else-if="subscribtion.deviceType == 1" style="height:20px" viewBox="0 0 24 24">
+                                      <path fill="#4caf50" d="M15,5H14V4H15M10,5H9V4H10M15.53,2.16L16.84,0.85C17.03,0.66 17.03,0.34 16.84,0.14C16.64,-0.05 16.32,-0.05 16.13,0.14L14.65,1.62C13.85,1.23 12.95,1 12,1C11.04,1 10.14,1.23 9.34,1.63L7.85,0.14C7.66,-0.05 7.34,-0.05 7.15,0.14C6.95,0.34 6.95,0.66 7.15,0.85L8.46,2.16C6.97,3.26 6,5 6,7H18C18,5 17,3.25 15.53,2.16M20.5,8A1.5,1.5 0 0,0 19,9.5V16.5A1.5,1.5 0 0,0 20.5,18A1.5,1.5 0 0,0 22,16.5V9.5A1.5,1.5 0 0,0 20.5,8M3.5,8A1.5,1.5 0 0,0 2,9.5V16.5A1.5,1.5 0 0,0 3.5,18A1.5,1.5 0 0,0 5,16.5V9.5A1.5,1.5 0 0,0 3.5,8M6,18A1,1 0 0,0 7,19H8V22.5A1.5,1.5 0 0,0 9.5,24A1.5,1.5 0 0,0 11,22.5V19H13V22.5A1.5,1.5 0 0,0 14.5,24A1.5,1.5 0 0,0 16,22.5V19H17A1,1 0 0,0 18,18V8H6V18Z"/>
+                                    </svg>
+                                    <svg v-else-if="subscribtion.deviceType == 2" style="height:20px" viewBox="0 0 24 24">
+                                        <path fill="#4caf50" d="M21,14H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10L8,21V22H16V21L14,18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/>
+                                    </svg>
+                                    <span style="color:#4caf50">Online</span>
+                                  </div>
+                                </v-flex>
+                              </v-layout>
+                            </v-flex>
+                          </v-layout>
+                      </template>
+                  </v-flex>
+                  <v-flex class="pb-0" v-else-if="diaries.activeSection == 3">
+                    <v-list subheader class="pa-0">
+                      <v-divider></v-divider>
+                      <v-list-tile @click="" ripple>
+                        <v-list-tile-content>
+                          <v-list-tile-title class="font-weight-medium">цитаты</v-list-tile-title>
+                        </v-list-tile-content>
+                      </v-list-tile>
+                      <template v-for="(topic,index) in diaries.topics">
+                        <v-divider></v-divider>
+                        <v-list-tile @click="" :key="topic.id" ripple>
+                          <v-list-tile-content>
+                            <v-list-tile-title class="font-weight-medium">{{ topic.text }}</v-list-tile-title>
+                          </v-list-tile-content>
+                          <v-list-tile-action>
+                            <v-tooltip lazy bottom :z-index="1">
+                              <v-btn @click="onTopicEdit(topic)" slot="activator" icon ripple>
+                                <v-icon color="grey">edit</v-icon>
+                              </v-btn>
+                              <span>Изменить</span>
+                            </v-tooltip>
+                          </v-list-tile-action>
+                        </v-list-tile>
+                      </template>
+                    </v-list>
+                  </v-flex>
+                  <v-flex v-else-if="diaries.activeSection == 4">
+                    <v-layout class="px-4 pb-4" column>
+                      <v-flex>
+                        <v-form v-model="diaries.valid">
+                          <v-text-field
+                            v-model.trim="diaries.topicModel.text"
+                            :rules="[unique('Рубрика с таким названием уже существует'),required('Это поле является обязательным к заполнению'),maxLength('Название превышает 25 символов',25)]"
+                            autofocus
+                            counter="25"
+                            hint="не более 25 символов"
+                            maxlength="25"
+                          ></v-text-field>
+                        </v-form>
+                      </v-flex>
+                      <v-flex>
+                        <v-btn @click="diaries.activeSection = 3" :disabled="!diaries.valid" class="ml-0" color="primary">Сохранить</v-btn>
+                      </v-flex>
+                    </v-layout>
+                  </v-flex>
+                  <v-flex v-else-if="diaries.activeSection == 5">
+                    <v-layout class="px-4 pb-4" column>
+                      <v-flex>
+                        <v-form v-model="diaries.valid" lazy-validation>
+                          <v-text-field
+                            v-model.trim="diaries.topicModel.text"
+                            autofocus
+                            :rules="[unique('Рубрика с таким названием уже существует'),required('Это поле является обязательным к заполнению'),maxLength('Название превышает 25 символов',25)]"
+                            counter="25"
+                            hint="не более 25 символов"
+                            maxlength="25"
+                          ></v-text-field>
+                        </v-form>
+                      </v-flex>
+                      <v-flex>
+                        <v-btn @click="diaries.activeSection = 3" :disabled="!diaries.valid" class="ml-0" color="primary">Сохранить</v-btn>
+                        <v-btn @click="onTopicDelete" color="error">Удалить рубрику</v-btn>
+                      </v-flex>
+                    </v-layout>
+                  </v-flex>
+                </v-layout>
+            </v-card>
+          </v-tab-item>
+        </v-tabs>
+      </v-card>
+    </v-flex>
+  </v-layout>
+</v-container>
+<% }else{ %>
+<%- partial('../homepage.ejs') %>
+<% } %>

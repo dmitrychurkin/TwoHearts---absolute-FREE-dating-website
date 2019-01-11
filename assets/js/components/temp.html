@@ -1,0 +1,373 @@
+<v-card>
+  <v-container grid-list-xs>
+    <v-layout column>
+      <v-flex>
+
+        <v-layout row>
+          <v-flex xs3 class="pr-2">
+            <v-select v-model="partnerSelector.me" :items="[{id:1,name:'Парень'},{id:0,name:'Девушка'}]" label="Я"
+              item-text="name" item-value="id"></v-select>
+          </v-flex>
+          <v-flex xs3 class="pr-2">
+            <v-select v-model="partnerSelector.lookingFor" :items="[{id:1,name:'Парень'},{id:0,name:'Девушка'}]" label="Ищу"
+              item-text="name" item-value="id"></v-select>
+          </v-flex>
+          <v-flex xs6>
+            <!--<v-autocomplete
+              v-model="partnerSelector.cityComplete.model"
+              :items="partnerSelector.cityComplete.items"
+              :loading="partnerSelector.cityComplete.isLoading"
+              :search-input.sync="partnerSelector.cityComplete.search"
+              chips
+              cache-items
+              clearable
+              hide-details
+              hide-selected
+              item-text="name"
+              item-value="symbol"
+              label="Регион"
+              solo
+            >
+              <template slot="no-data">
+                <v-list-tile>
+                  <v-list-tile-title>
+                    Введите поисковой
+                    <strong>город или страну</strong>
+                  </v-list-tile-title>
+                </v-list-tile>
+              </template>
+              <template
+                slot="selection"
+                slot-scope="data"
+              >
+                <v-chip
+                  :selected="data.selected"
+                  color="blue-grey"
+                  class="white--text"
+                >
+                  <v-icon left>location_city</v-icon>
+                  <span v-text="data.item.name"></span>
+                </v-chip>
+              </template>
+              <template
+                slot="item"
+                slot-scope="data"
+              >
+                <v-list-tile-avatar
+                  color="indigo"
+                  class="headline font-weight-light white--text"
+                >
+                  {{ data.item.name.charAt(0) }}
+                </v-list-tile-avatar>
+                <v-list-tile-content>
+                  <v-list-tile-title v-text="data.item.name"></v-list-tile-title>
+                  <v-list-tile-sub-title v-text="data.item.symbol"></v-list-tile-sub-title>
+                </v-list-tile-content>
+                <v-list-tile-action>
+                  <v-icon>location_city</v-icon>
+                </v-list-tile-action>
+              </template>
+            </v-autocomplete>-->
+            <v-combobox v-model="partnerSelector.city" clearable chips solo label="Регион">
+              <template v-if="partnerSelector.city == null" slot="no-data">
+                <v-list-tile>
+                  <v-list-tile-content>
+                    <v-list-tile-title>
+                      Нажмите <kbd>enter</kbd> для ввода
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </template>
+              <template slot="selection" slot-scope="data">
+                <v-chip :selected="data.selected" color="blue-grey" class="white--text">
+                  <v-icon left>location_city</v-icon>
+                  <span v-text="data.item"></span>
+                </v-chip>
+              </template>
+            </v-combobox>
+          </v-flex>
+        </v-layout>
+
+        <v-layout row align-end>
+          <v-flex class="pr-3">
+            <v-subheader>Ожидаемый возраст</v-subheader>
+            <v-layout>
+              <v-flex shrink style="width: 60px">
+                <v-text-field v-model="partnerSelector.ageRange[0]" class="mt-0" single-line type="number"></v-text-field>
+              </v-flex>
+
+              <v-flex class="px-3">
+                <v-range-slider v-model="partnerSelector.ageRange" :max="99" :min="18" thumb-label always-dirty></v-range-slider>
+              </v-flex>
+
+              <v-flex shrink style="width: 60px">
+                <v-text-field v-model="partnerSelector.ageRange[1]" class="mt-0" single-line type="number"></v-text-field>
+              </v-flex>
+            </v-layout>
+          </v-flex>
+          <v-flex xs5>
+            <v-select v-model="partnerSelector.purpose" :items="[{id:0,name:'Не имеет значения'},{id:1,name:'Поиск друзей'},{id:2,name:'Романтические отношения'},{id:3,name:'Создание семьи'},{id:4,name:'Секс'},{id:5,name:'Совместное путешествие'}]"
+              label="Цель знакомства" item-text="name" item-value="id"></v-select>
+          </v-flex>
+        </v-layout>
+      </v-flex>
+      <v-flex>
+        <v-layout row>
+          <v-flex>
+            <v-checkbox color="primary" v-model="partnerSelector.newUsers" label="новые пользователи" :value="false"></v-checkbox>
+            <v-checkbox color="primary" v-model="partnerSelector.online" label="сейчас онлайн" :value="false"></v-checkbox>
+          </v-flex>
+          <v-flex>
+            <v-checkbox color="primary" v-model="partnerSelector.nearMe" label="рядом co мной" :value="false" disabled></v-checkbox>
+          </v-flex>
+        </v-layout>
+      </v-flex>
+      <v-flex>
+        <v-expansion-panel class="elevation-0" expand>
+          <v-expansion-panel-content>
+            <div slot="header">
+              <v-btn flat>Расширенный поиск</v-btn>
+            </div>
+            <v-container grid-list-xs>
+              <v-layout column>
+                <v-flex>
+                  <!-- <v-autocomplete
+                  v-model="partnerSelector.interestsComplete.model"
+                  :items="partnerSelector.interestsComplete.items"
+                  :loading="partnerSelector.interestsComplete.isLoading"
+                  :search-input.sync="partnerSelector.interestsComplete.search"
+                  chips
+                  cache-items
+                  clearable
+                  hide-details
+                  hide-selected
+                  item-text="name"
+                  item-value="name"
+                  label="Общие интересы"
+                  solo
+                  full-width
+                  multiple
+                  open-on-clear
+                >
+                  <template slot="no-data">
+                    <v-list-tile>
+                      <v-list-tile-title>
+                        Поиск по общим
+                        <strong>интересам</strong>
+                      </v-list-tile-title>
+                    </v-list-tile>
+                  </template>
+                  <template
+                    slot="item"
+                    slot-scope="data"
+                  >
+                    <v-list-tile-avatar
+                      color="indigo"
+                      class="headline font-weight-light white--text"
+                    >
+                      {{ data.item.name.charAt(0) }}
+                    </v-list-tile-avatar>
+                    <v-list-tile-content>
+                      <v-list-tile-title v-text="data.item.name"></v-list-tile-title>
+                    </v-list-tile-content>
+                  </template>
+                  <template
+                    slot="selection"
+                    slot-scope="data"
+                  >
+                    <v-chip
+                      :selected="data.selected"
+                      close
+                      class="chip--select-multi"
+                      @input="removeSelected(data, partnerSelector.interestsComplete.model)"
+                    >
+                      {{ data.item.name }}
+                    </v-chip>
+                  </template>
+                </v-autocomplete> -->
+                  <v-combobox v-model="partnerSelector.interests" hint="Не более 5 интересов" clearable deletable-chips
+                    multiple chips solo label="Общие интересы">
+                    <template slot="no-data">
+                      <v-list-tile>
+                        <v-list-tile-content>
+                          <v-list-tile-title v-if="partnerSelector.interests.length < 5">
+                            Нажмите <kbd>enter</kbd> для ввода
+                          </v-list-tile-title>
+                          <v-list-tile-title v-else>
+                            Вы уже ввели 5 интересов
+                          </v-list-tile-title>
+                        </v-list-tile-content>
+                      </v-list-tile>
+                    </template>
+                  </v-combobox>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs4>
+                      <v-subheader>Вес</v-subheader>
+                      <v-range-slider v-model="partnerSelector.weight" always-dirty :min="40" :max="150" thumb-label="always">
+                      </v-range-slider>
+                    </v-flex>
+                    <v-flex offset-xs4 xs4>
+                      <v-subheader>Рост</v-subheader>
+                      <v-range-slider v-model="partnerSelector.height" always-dirty :min="140" :max="220" thumb-label="always">
+                      </v-range-slider>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.languages" :items="[{id:0,name:'Русский'},{id:1,name:'Английский'},{id:2,name:'Немецкий'},{id:3,name:'Французский'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Знает языки"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.relationship" :items="[{id:0,name:'Свободен/Свободна'},{id:1,name:'Занят/Занята'},{id:2,name:'В браке, живет порознь'},{id:3,name:'Разведен/Разведена'},{id:4,name:'Вдовец/Вдова'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Отношения"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.children" :items="[{id:0,name:'Детей нет, и не хочет'},{id:1,name:'Возможны в будущем'},{id:2,name:'Дети есть, больше не хочет'},{id:3,name:'Дети есть, хочет еще'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Есть ли дети"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.education" :items="[{id:0,name:'Среднее'},{id:1,name:'Среднее-специальное'},{id:2,name:'Студент(-ка)'},{id:3,name:'Неполное высшее'},{id:4,name:'Высшее'},{id:5,name:'Несколько высших'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Образование"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.income" :items="[{id:0,name:'Есть небольшой стабильный доход'},{id:1,name:'Средний доход'},{id:2,name:'Очень хорошо зарабатывает'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="С материальным положением"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.smoke" :items="[{id:0,name:'Не курит, не терпит курящих'},{id:1,name:'Не курит, к курящим относится нейтрально'},{id:2,name:'Курит время от времени'},{id:3,name:'Курит каждый день'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Отношение к курению"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.drink" :items="[{id:0,name:'Не пьет, не терпит выпивающих'},{id:1,name:'Не пьет, к выпивающим относится нейтрально'},{id:2,name:'Выпивает иногда в компаниях'},{id:3,name:'Любит выпить'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Отношение к алкоголю"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.zodiak" :items="[{id:0,name:'Овен'},{id:1,name:'Телец'},{id:2,name:'Близнецы'},{id:3,name:'Рак'},{id:4,name:'Лев'},{id:5,name:'Дева'},{id:6,name:'Весы'},{id:7,name:'Скорпион'},{id:8,name:'Стрелец'},{id:9,name:'Козерог'},{id:10,name:'Водолей'},{id:11,name:'Рыбы'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Со знаком Зодиака"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.body" :items="[{id:0,name:'Стройное'},{id:1,name:'Спортивное'},{id:2,name:'Есть пара лишних кило'},{id:3,name:'Полное'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Телосложение"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.eyes" :items="[{id:0,name:'Карие'},{id:1,name:'Серые'},{id:2,name:'Голубые'},{id:3,name:'Зеленые'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="С цветом глаз"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.tatoo" :items="[{id:0,name:'Пирсинг'},{id:1,name:'Татуировки'},{id:2,name:'Шрамы'},{id:3,name:'Веснушки'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="На теле есть"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.sponsore" :items="[{id:0,name:'Поддержу'},{id:1,name:'Ищу поддержку'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Материальная поддержка"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.car" :items="[{id:0,name:'Нет'},{id:1,name:'Есть'}]" item-text="name"
+                        item-value="id" clearable chips multiple label="Наличие автомобиля"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.sport" :items="[{id:0,name:'Бег'},{id:1,name:'Ходьба'},{id:2,name:'Фитнес'},{id:3,name:'Плавание'},{id:4,name:'Велосипед'},{id:5,name:'Ролики'},{id:6,name:'Лыжи'},{id:7,name:'Качалка'},{id:8,name:'Экстрим'},{id:9,name:'Единоборства'},{id:10,name:'Йога'},{id:11,name:'Командные игры'},{id:12,name:'Танцы'},{id:13,name:'Футбол'},{id:14,name:'Волейбол'},{id:15,name:'Хоккей'},{id:16,name:'Коньки'},{id:17,name:'Пилатес'},{id:18,name:'Гимнастика'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Спорт"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.mortgage" :items="[{id:0,name:'Собственная квартира'},{id:1,name:'Дом, коттедж'},{id:2,name:'Комната в общежитии, коммуналка'},{id:3,name:'Снимает квартиру'},{id:4,name:'Снимает комнату'},{id:5,name:'Живет у родителей'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Жилищные условия"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.orientation" :items="[{id:0,name:'Гетеро'},{id:1,name:'В поиске себя'},{id:2,name:'Пансексуал'},{id:3,name:'Би'},{id:4,name:'Гей/Лесби'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Ориентация"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.datingAs" :items="[{id:0,name:'М+Ж'},{id:1,name:'М+М'},{id:2,name:'Ж+Ж'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Знакомится как пара"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.lokingAs" :items="[{id:0,name:'М+Ж'},{id:1,name:'М+М'},{id:2,name:'Ж+Ж'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Ищет пару"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.sexRole" :items="[{id:0,name:'Универсальная'},{id:1,name:'Активная'},{id:2,name:'Пассивная'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Роль в сексе"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.sexLikeIn" :items="[{id:0,name:'Классический секс'},{id:1,name:'Анальный секс'},{id:2,name:'Ролевые игры'},{id:3,name:'Публичный секс'},{id:4,name:'Подглядывание'},{id:5,name:'Шимейл'},{id:6,name:'Кросс-дрессинг'},{id:7,name:'Большой член'},{id:8,name:'Сквирт'},{id:9,name:'Фистинг'},{id:10,name:'Фингеринг'},{id:11,name:'Взаимная мастурбация'},{id:12,name:'Трибадизм'},{id:13,name:'Фрот'},{id:14,name:'Золотой дождь'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Нравится в сексе"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.sexOral" :items="[{id:0,name:'Минет'},{id:1,name:'Глубокий минет'},{id:2,name:'МБР'},{id:3,name:'Куннилигус'},{id:4,name:'Вылизывание тела'},{id:5,name:'Вылизывание ног'},{id:6,name:'Анилингус'},{id:7,name:'Поза 69'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Оральный секс"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.sexGroup" :items="[{id:0,name:'Свинг'},{id:1,name:'Оргия'},{id:2,name:'ЖМЖ'},{id:3,name:'МЖМ'},{id:4,name:'МЖМЖ'},{id:5,name:'Куколд'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Групповой секс"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex>
+                  <v-layout align-end row>
+                    <v-flex xs5>
+                      <v-select v-model="partnerSelector.sexBdsm" :items="[{id:0,name:'Доминирование'},{id:1,name:'Подчинение'},{id:2,name:'Свитчинг'},{id:3,name:'Порка'},{id:4,name:'Бондаж'},{id:5,name:'Игры с дыханием'},{id:6,name:'Беби-плей'},{id:7,name:'Пет-плей'},{id:8,name:'Пеггинг'},{id:9,name:'Страпон'},{id:10,name:'Принуждение'},{id:11,name:'Пси-доминация'},{id:12,name:'Туалетные игры'},{id:13,name:'Фейсситтинг'},{id:14,name:'Садо'},{id:15,name:'Мазо'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="БДСМ"></v-select>
+                    </v-flex>
+                    <v-flex offset-xs2 xs5>
+                      <v-select v-model="partnerSelector.sexFetish" :items="[{id:0,name:'Кружевное белье'},{id:1,name:'Латекс'},{id:2,name:'Кожа'},{id:3,name:'Нейлон'},{id:4,name:'Фут-фетиш'}]"
+                        item-text="name" item-value="id" clearable chips multiple label="Фетиш"></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+              </v-layout>
+            </v-container>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-flex>
+
+      <v-flex>
+        <v-btn color="warn">Искать</v-btn>
+      </v-flex>
+    </v-layout>
+  </v-container>
+</v-card>

@@ -1,0 +1,278 @@
+<% if (me) { %>
+<v-container fluid>
+  <v-layout>
+    <v-flex>
+      <div class="chat">
+        <div class="chat__u">
+          <div class="chat__search pl-4 pt-4 pr-5">
+            <v-text-field
+              @input="chat.filterThreads"
+              dark
+              box
+              color="white"
+              placeholder="Искать по имени"
+              append-icon="search"
+            ></v-text-field>
+          </div>
+          <transition-group name="flip-threads" tag="ul" class="chat__thread-section">
+            <li @click.stop="switchThread(thread, index)" v-for="(thread, index) in chat.threads" :key="thread.id || 'TEMP_THREAD_ID'" :class="{'chat__thread pl-4 pb-2 pt-3': true, selected: thread.id === (chat.activeThread && chat.activeThread.id), disabled: thread.filteredNum === 0}">
+              <v-badge style="width:85%" :value="thread.messageCounts.new" color="primary">
+                <span slot="badge">{{ thread.messageCounts.new }}</span>
+                <div class="chat__user flex">
+                  <div class="chat__ui">
+                    <img :src="thread.participants[0].secondaryProfilePic ? thread.participants[0].secondaryProfilePic : (thread.participants[0].gender ? '/images/male.jfif' : '/images/female.png')" alt="thread.participants[0].name" title="thread.participants[0].name">
+                  </div>
+                  <div class="chat__ud pl-2">
+                    <div class="white--text text-truncate">{{ thread.participants[0].name }}</div>
+                    <div class="text-truncate flex">
+                      <div :class="{'ind': true, 'online': thread.participants[0].online && thread.participants[0].lastSeenAt >= chat.mediator - 1800 * 1000 }"></div>
+                      <span class="grey--text text--darken-1">{{ (thread.participants[0].online && thread.participants[0].lastSeenAt >= chat.mediator - 1800 * 1000) ? 'online' : chatOfflineStator(thread.participants[0].lastSeenAt, { messages: { from: 'с' } }) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </v-badge>
+            </li>
+          </transition-group>
+        </div>
+        <div class="chat__m">
+          <v-progress-linear style="position:absolute;z-index:0" class="ma-0" :active="chat.showMessLoadSpinner" :indeterminate="true" :query="true"></v-progress-linear>
+          <v-layout fill-height align-center v-if="chat.showThreadLoadSpinner">
+            <v-flex>
+              <v-progress-circular
+                class="ma-auto"
+                :size="300"
+                :width="7"
+                color="amber"
+                indeterminate
+              ></v-progress-circular>
+            </v-flex>
+          </v-layout>
+        <template v-else-if="chat.activeThread">
+          <div class="chat__header pl-4 py-3 flex">
+            <div class="chat__ui">
+              <img :src="chat.activeThread.participants[0].secondaryProfilePic ? chat.activeThread.participants[0].secondaryProfilePic : (chat.activeThread.participants[0].gender ? '/images/male.jfif' : '/images/female.png')" alt="chat.activeThread.participants[0].name" title="chat.activeThread.participants[0].name">
+            </div>
+            <div class="chat__inf pa-2">
+              <h2 class="font-weight-light grey--text text--darken-3 text-truncate ma-0">Chat with {{ chat.activeThread.participants[0].name }}</h2>
+              <span v-if="chat.activeThread.messageCounts.total" class="grey--text text--darken-1">already {{ chat.activeThread.messageCounts.total }} messages</span>
+            </div>
+            <div class="chat__misc text-xs-right pr-3">
+              <v-tooltip v-if="!chat.showControls" bottom>
+                <span>Опции</span>
+                <v-btn slot="activator" @click.stop="chat.showControls = !chat.showControls" fab flat color="yellow">
+                  <v-icon x-large>star</v-icon>
+                </v-btn>
+              </v-tooltip>
+              <v-btn v-else @click.stop="chat.showControls = !chat.showControls" fab flat color="yellow">
+                <v-icon x-large>star</v-icon>
+              </v-btn>
+              <v-fab-transition>
+                <v-tooltip v-if="chat.showControls" style="position:absolute;right:76px;top:7px" bottom>
+                  <span>Удалить чат</span>
+                  <v-btn slot="activator" @click.stop="chat.deleteThread" fab dark small color="pink">
+                    <v-icon dark>highlight_off</v-icon>
+                  </v-btn>
+                </v-tooltip>
+              </v-fab-transition>
+              <v-fab-transition>
+                <v-tooltip v-if="chat.showControls && chat.activeThread.id && chat.activeThread.id !== 'TEMP_THREAD_ID'" style="position:absolute;right:-22px;top:7px" bottom>
+                  <span>Очистить переписку</span>
+                  <v-btn class="mr-0" slot="activator" @click.stop="chat.clearMessages" fab dark small color="indigo">
+                    <v-icon dark>delete_forever</v-icon>
+                  </v-btn>
+                </v-tooltip>
+              </v-fab-transition>
+              <v-fab-transition>
+                <v-tooltip v-if="chat.showControls && chat.activeThread.id && chat.activeThread.id !== 'TEMP_THREAD_ID'" style="position:absolute;right:23px;top:-42px" bottom>
+                  <span v-if="!chat.activeThread.muted">Заблокировать переписку</span>
+                  <span v-else>Разблокировать переписку</span>
+                  <v-btn slot="activator" @click.stop="chat.toggleMute" fab dark small color="green">
+                    <v-icon dark v-if="!chat.activeThread.muted">mic_off</v-icon>
+                    <v-icon dark v-else>mic</v-icon>
+                  </v-btn>
+                </v-tooltip>
+              </v-fab-transition>
+              <v-fab-transition>
+                <v-tooltip v-if="chat.showControls && chat.activeThread.id && chat.activeThread.id !== 'TEMP_THREAD_ID'" style="position:absolute;right:23px;top:60px;z-index:1" bottom>
+                  <span v-if="!chat.activeThread.participants[0].userBlocked">Заблокировать пользователя</span>
+                  <span v-else>Разблокировать пользователя</span>
+                  <v-btn slot="activator" @click.stop="chat.toggleBlockUser" fab dark small color="orange">
+                    <v-icon dark v-if="!chat.activeThread.participants[0].userBlocked">voice_over_off</v-icon>
+                    <v-icon dark v-else>record_voice_over</v-icon>
+                  </v-btn>
+                </v-tooltip>
+              </v-fab-transition>
+            </div>
+          </div>
+          <div class="chat-hc">
+            <div ref="messagePanel" class="chat-history pt-5 pb-4">
+            <div ref="panelDivider" class="chat-history__divider"></div>
+            <template v-for="(message,index) in chat.activeThread.messages">
+              <div :id="message.id" :key="message.id" :class="{'chat-msg flex pb-2':true, 'to': message.fromUUID === (me.data && me.data.uuid), 'from': message.fromUUID !== (me.data && me.data.uuid), 'js-tracking-view': !message.viewed && message.fromUUID !== (me.data && me.data.uuid), 'js-viewed': !message.viewed && message.fromUUID === (me.data && me.data.uuid)}">
+                <div class="chat-msg__dot"></div>
+                <div :class="{'chat-msg__body': true, 'px-3': true}">
+                  <v-card :color="message.fromUUID === (me.data && me.data.uuid) ? 'light-blue lighten-2' : 'green lighten-1'" class="chat-msg__body-card">
+                    <v-container v-if="Array.isArray(message.attachment) && message.attachment.length > 0" grid-list-sm fluid>
+                      <v-layout row wrap>
+                        <v-flex
+                          v-if="message.attachment[n-1]"
+                          v-for="n in 6"
+                          :key="n"
+                          xs4
+                          d-flex>
+                          <v-card flat tile class="d-flex">
+                            <div @click.stop="chat.openFileModal(message, n-1)" :class="{'tile-cover flex':true,'tile-cover__permanent':n==6 && message.attachment.length > 6}">
+                              <div style="width:100%" class="ma-auto text-xs-center">
+                                <div v-if="n==6 && message.attachment.length > 6" class="subheading">+{{ message.attachment.length - n }}</div>
+                                <template v-else>
+                                  <div class="text-truncate px-1">{{ message.attachment[n-1].type }}</div>
+                                  <div class="text-truncate">{{ chat.formatBytes(message.attachment[n-1].size, 2) }}</div>
+                                </template>
+                              </div>
+                            </div>
+                            <v-img
+                              :src="message.attachment[n-1].type.indexOf('image/')==0 ? chat.b64toBlob(message.attachment[n-1]) : '/images/file.png'"
+                              lazy-src="/images/lazy.jfif"
+                              aspect-ratio="1"
+                              class="grey lighten-2">
+                              <v-layout
+                                slot="placeholder"
+                                fill-height
+                                align-center
+                                justify-center
+                                ma-0>
+                                <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                              </v-layout>
+                            </v-img>
+                          </v-card>
+                        </v-flex>
+                      </v-layout>
+                    </v-container>
+                    <v-card-text :class="{'pt-0': Array.isArray(message.attachment) && message.attachment.length > 0,'pb-0':!message.messageText.trim().length}">{{ message.messageText }}</v-card-text>
+                    <div class="chat-msg__ind" v-if="message.fromUUID === (me.data && me.data.uuid)">
+                      <v-icon v-if="message.delivered" :color="message.viewed ? 'green lighten-1' : 'rgba(0,0,0,.54)'">done_all</v-icon>
+                      <v-icon v-else>done</v-icon>
+                    </div>
+                  </v-card>
+                </div>
+                <div class="chat-msg__oposite font-weight-bold">{{ messageTimestamps(message.createdAt, { t: 'сегодня', y: 'вчера' }) }}</div>
+              </div>
+
+              <!--<li :id="message.id" :key="message.id" v-if="message.fromUUID === (me.data && me.data.uuid)" :class="{'chat__msg flex pt-3 pb-4 px-2 to':true,'js-viewed':!message.viewed}">
+                <div class="header flex">
+                  <div class="grey--text text--darken-1">{{ messageTimestamps(message.createdAt, { t: 'сегодня', y: 'вчера' }) }}</div>
+                  <div class="user-name pl-1 flex"><span>{{ message.author.name }}</span><div class="ind"></div></div>
+                </div>
+                <div class="message_wrap mt-2 px-3 py-2">
+                  <span class="white--text">{{ message.messageText }}</span>
+                </div>
+                <v-icon v-if="message.delivered" :color="message.viewed ? 'rgb(148, 194, 237)' : 'rgba(0,0,0,.54)'">done_all</v-icon>
+                <v-icon v-else>done</v-icon>
+              </li>
+              <li :id="message.id" :key="message.id" v-else :class="{'chat__msg pt-3 pb-4 px-2 from':true,'js-tracking-view':!message.viewed}">
+                <div class="header flex">
+                  <div class="user-name pr-1 flex"><div class="ind"></div><span>{{ message.author.name }}</span></div>
+                  <div class="grey--text text--darken-1">{{ messageTimestamps(message.createdAt, { t: 'сегодня', y: 'вчера' }) }}</div>
+                </div>
+                <div class="message_wrap mt-2 px-3 py-2">
+                  <span class="white--text">{{ message.messageText }}</span>
+                </div>
+              </li>-->
+            </template>
+            </div>
+            <div :class="{'chat__typing': true, 'user-typing': chat.typingIndicator}">
+              <v-icon class="dot first" small>fiber_manual_record</v-icon>
+              <v-icon class="dot second" small>fiber_manual_record</v-icon>
+              <v-icon class="dot third" small>fiber_manual_record</v-icon>
+            </div>
+          </div>
+          <div class="chat__ta py-3">
+            <v-form ref="chatForm" lazy-validation>
+              <v-textarea
+                @input="chat.chatMessageTyping"
+                v-model.trim="chat.messageBody"
+                :rules="[maxLength('Слишком много символов', chat.MAX_LENGTH)]"
+                :maxlength="chat.MAX_LENGTH"
+                box
+                no-resize
+                color="success"
+                placeholder="Type message here"
+              ></v-textarea>
+              <div class="actions flex">
+                <v-tooltip class="pl-3" bottom>
+                  <span>Приложить файл</span>
+                  <v-btn @click.stop="chat.selectFiles" slot="activator" flat icon :color="chat.totalFileSize <= chat.maxFileSize ? (!chat.files.images.length && !chat.files.others.length ? 'indigo' : 'success') : 'error'">
+                    <v-icon>perm_media</v-icon>
+                  </v-btn>
+                </v-tooltip>
+                <v-btn @click.stop="chat.sendChatMessage" flat color="success">send</v-btn>
+              </div>
+            </v-form>
+          </div>
+        </template>
+        </div>
+      </div>
+
+      <v-snackbar
+        v-model="chat.snakeBar"
+        left>
+        {{ chat.snakeBarMessageCode == 8 ? (chat.activeThread.muted ? 'Получение сообщений приоставлено' : 'Получение сообщений возобновлено') : chat.snakeBarMessageCode == 10 ? (chat.activeThread.participants[0].userBlocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован') : chat.snakeBarMessageCode == -1 ? 'Не удалось отправить сообщение пользователю, так как пользователь Вас заблокировал' : chat.snakeBarMessageCode == -2 ? 'Вы превысили общий лимит на загрузку в ' + chat.formatBytes(chat.maxFileSize, 2) + ' . Текущий размер ' + chat.formatBytes(chat.totalFileSize) : '' }}
+        <v-btn
+          color="pink"
+          flat
+          @click.stop="chat.snakeBar = false">
+          закрыть
+        </v-btn>
+      </v-snackbar>
+      <input type="file" ref="fileElem" multiple accept="image/*" v-show="false">
+      <v-layout row justify-center>
+        <v-dialog v-model="chat.filesDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+          <v-card>
+            <v-toolbar dark color="primary">
+              <v-btn icon dark @click.stop="chat.filesDialog = false">
+                <v-icon>close</v-icon>
+              </v-btn>
+              <v-toolbar-title>Файлы сообщения</v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-toolbar-items>
+                <v-btn dark flat @click.stop="chat.filesDialog = false">Save</v-btn>
+              </v-toolbar-items>
+            </v-toolbar>
+            <template v-if="chat.activeFileMessage">
+              <v-layout class="js-messageFiles pt-3">
+                <v-flex xs5 v-for="(file, index) in chat.activeFileMessage.attachment" :key="index" d-flex>
+                  <v-card flat tile class="d-flex">
+                    <v-img
+                      :src="file.type.indexOf('image/')==0 ? (file.blobUri || chat.b64toBlob(file)) : '/images/file.png'"
+                      lazy-src="/images/lazy.jfif"
+                      :max-height="300"
+                      aspect-ratio="1"
+                      contain>
+                      <v-layout
+                        slot="placeholder"
+                        fill-height
+                        align-center
+                        justify-center
+                        ma-0>
+                        <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                      </v-layout>
+                    </v-img>
+                  </v-card>
+                </v-flex>
+              </v-layout>
+              <v-divider></v-divider>
+              <div style="width:90%;margin:auto" row class="js-messageFilesNav">
+                <div v-for="(file, index) in chat.activeFileMessage.attachment" :key="index">
+                  <img style="height:100px" :src="file.type.indexOf('image/')==0 ? (file.blobUri || chat.b64toBlob(file)) : '/images/file.png'">
+                </div>
+              </div>
+            </template>
+          </v-card>
+        </v-dialog>
+      </v-layout>
+    </v-flex>
+  </v-layout>
+</v-container>
+<% }else{ %>
+<%- partial('../homepage.ejs') %>
+<% } %>
